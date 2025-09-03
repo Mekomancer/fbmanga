@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "main.h"
-#include "framebuffer.h"
+#include "mangadex.h"
 
 const char HELPOPT[] ={'-','-','h','e','l','p'};
 
 int main(int argn, char* argv[]) {
+  curl_global_init(CURL_GLOBAL_ALL);
   parseArgs(argn, argv);
-  framebuffer fb;
-  fb.init("/dev/fb0");
+  curl_global_cleanup();
   return 0;
 }
 

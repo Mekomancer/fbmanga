@@ -1,22 +1,25 @@
-sources = main.cpp framebuffer.cpp img.cpp
+sources = main.cpp mangadex.cpp
 objs = $(sources:%.cpp=build/debug/%.o)
 deps = $(sources:%.cpp=build/debug/%.d)
-cppflags = --std=c++23 -Wextra -Wall -Winvalid-pch 
+optflags = --std=c++23
+warnings = -Wextra -Wall -Winvalid-pch 
+curl != curlpp-config --libs
+cppflags = $(optflags) $(warnings) $(libflags) 
 .PHONY: clean
 fbmanga-debug: $(objs)|build/debug
-	g++ $(cppflags) $^ -o fbmanga-debug
+	g++ $(cppflags) $^ -o fbmanga-debug $(curl)
 
 include $(sources:%.cpp=build/debug/%.d)
 
 pch.h.gch: pch.h
-	g++ $(cppflags) pch.h -o pch.h.gch
+	g++ $(warnings) $(optflags) pch.h -o pch.h.gch
 
 $(objs): build/debug/%.o: %.cpp pch.h.gch
-	g++ $(cppflags) -c $< -o $@
+	g++ $(cppflags) -c $< -o $@ $(curl)
 
 $(deps): build/debug/%.d: %.cpp | build/debug
 	@set -e; rm -f $@; \
-	 g++ -M -MG $(cppflags) $< > $@.$$$$; \
+	 cc -M $(cppflags) $< > $@.$$$$; \
 	 sed 's,\(/build/debug/$*\)\.o[ :]*,\1.o $@ : pch ,g' < $@.$$$$ > $@; \
  	 rm -f $@.$$$$
 
@@ -25,3 +28,4 @@ build/debug:
 	mkdir build/debug
 clean:
 	rm -r build
+	rm pch.h.gch

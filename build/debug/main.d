@@ -138,73 +138,40 @@ main.o: main.cpp /usr/include/stdc-predef.h pch.h /usr/include/fcntl.h \
  /usr/include/arm-linux-gnueabihf/bits/getopt_posix.h \
  /usr/include/arm-linux-gnueabihf/bits/getopt_core.h \
  /usr/include/arm-linux-gnueabihf/bits/unistd_ext.h \
- /usr/include/linux/close_range.h /usr/include/GraphicsMagick/Magick++.h \
- /usr/include/Magick++/Include.h magick/magick_config.h \
- /usr/include/c++/12/stdlib.h /usr/include/time.h \
+ /usr/include/linux/close_range.h \
+ /usr/include/arm-linux-gnueabihf/curl/curl.h \
+ /usr/include/arm-linux-gnueabihf/curl/curlver.h \
+ /usr/include/arm-linux-gnueabihf/curl/system.h \
+ /usr/include/arm-linux-gnueabihf/sys/socket.h \
+ /usr/include/arm-linux-gnueabihf/bits/socket.h \
+ /usr/include/arm-linux-gnueabihf/bits/socket_type.h \
+ /usr/include/arm-linux-gnueabihf/bits/sockaddr.h \
+ /usr/lib/linux/uapi/arm/asm/socket.h /usr/include/asm-generic/socket.h \
+ /usr/include/linux/posix_types.h /usr/include/linux/stddef.h \
+ /usr/lib/linux/uapi/arm/asm/posix_types.h \
+ /usr/include/asm-generic/posix_types.h \
+ /usr/lib/linux/uapi/arm/asm/bitsperlong.h \
+ /usr/include/asm-generic/bitsperlong.h \
+ /usr/lib/linux/uapi/arm/asm/sockios.h /usr/include/asm-generic/sockios.h \
+ /usr/include/arm-linux-gnueabihf/bits/types/struct_osockaddr.h \
+ /usr/lib/gcc/arm-linux-gnueabihf/12/include/limits.h \
+ /usr/lib/gcc/arm-linux-gnueabihf/12/include/syslimits.h \
+ /usr/include/limits.h /usr/include/arm-linux-gnueabihf/bits/posix1_lim.h \
+ /usr/include/arm-linux-gnueabihf/bits/local_lim.h \
+ /usr/include/linux/limits.h \
+ /usr/include/arm-linux-gnueabihf/bits/pthread_stack_min-dynamic.h \
+ /usr/include/arm-linux-gnueabihf/bits/posix2_lim.h \
+ /usr/include/arm-linux-gnueabihf/bits/xopen_lim.h \
+ /usr/include/arm-linux-gnueabihf/bits/uio_lim.h /usr/include/time.h \
  /usr/include/arm-linux-gnueabihf/bits/time.h \
  /usr/include/arm-linux-gnueabihf/bits/timex.h \
  /usr/include/arm-linux-gnueabihf/bits/types/struct_tm.h \
  /usr/include/arm-linux-gnueabihf/bits/types/struct_itimerspec.h \
- magick/api.h /usr/include/Magick++/Image.h /usr/include/c++/12/list \
- /usr/include/c++/12/bits/stl_list.h \
- /usr/include/c++/12/bits/allocated_ptr.h \
- /usr/include/c++/12/ext/aligned_buffer.h \
- /usr/include/c++/12/bits/list.tcc /usr/include/Magick++/Blob.h \
- /usr/include/Magick++/Color.h /usr/include/Magick++/Drawable.h \
- /usr/include/c++/12/functional /usr/include/c++/12/tuple \
- /usr/include/c++/12/bits/uses_allocator.h \
- /usr/include/c++/12/bits/std_function.h /usr/include/c++/12/typeinfo \
- /usr/include/c++/12/unordered_map /usr/include/c++/12/bits/hashtable.h \
- /usr/include/c++/12/bits/hashtable_policy.h \
- /usr/include/c++/12/bits/enable_special_members.h \
- /usr/include/c++/12/bits/node_handle.h \
- /usr/include/c++/12/bits/unordered_map.h \
- /usr/include/c++/12/bits/erase_if.h /usr/include/c++/12/vector \
- /usr/include/c++/12/bits/stl_uninitialized.h \
- /usr/include/c++/12/bits/stl_vector.h \
- /usr/include/c++/12/bits/stl_bvector.h \
- /usr/include/c++/12/bits/vector.tcc /usr/include/c++/12/array \
- /usr/include/c++/12/bits/stl_algo.h \
- /usr/include/c++/12/bits/algorithmfwd.h \
- /usr/include/c++/12/bits/stl_heap.h \
- /usr/include/c++/12/bits/stl_tempbuf.h \
- /usr/include/c++/12/bits/uniform_int_dist.h \
- /usr/include/c++/12/bits/move_only_function.h \
- /usr/include/c++/12/bits/mofunc_impl.h /usr/include/c++/12/utility \
- /usr/include/c++/12/bits/stl_relops.h /usr/include/Magick++/Geometry.h \
- /usr/include/Magick++/Exception.h /usr/include/c++/12/exception \
- /usr/include/c++/12/bits/exception_ptr.h \
- /usr/include/c++/12/bits/cxxabi_init_exception.h \
- /usr/include/c++/12/bits/nested_exception.h \
- /usr/include/Magick++/TypeMetric.h /usr/include/Magick++/Pixels.h \
- /usr/include/Magick++/STL.h /usr/include/c++/12/algorithm \
- /usr/include/c++/12/bits/ranges_algo.h \
- /usr/include/c++/12/bits/ranges_algobase.h \
- /usr/include/c++/12/bits/ranges_util.h \
- /usr/include/c++/12/pstl/glue_algorithm_defs.h \
- /usr/include/c++/12/pstl/execution_defs.h /usr/include/c++/12/iterator \
- /usr/include/c++/12/bits/stream_iterator.h \
- /usr/include/c++/12/bits/streambuf_iterator.h \
- /usr/include/c++/12/streambuf /usr/include/c++/12/bits/ios_base.h \
- /usr/include/c++/12/ext/atomicity.h \
- /usr/include/arm-linux-gnueabihf/c++/12/bits/gthr.h \
- /usr/include/arm-linux-gnueabihf/c++/12/bits/gthr-default.h \
- /usr/include/pthread.h /usr/include/sched.h \
- /usr/include/arm-linux-gnueabihf/bits/sched.h \
- /usr/include/arm-linux-gnueabihf/bits/types/struct_sched_param.h \
- /usr/include/arm-linux-gnueabihf/bits/cpu-set.h \
- /usr/include/arm-linux-gnueabihf/bits/setjmp.h \
- /usr/include/arm-linux-gnueabihf/bits/types/struct___jmp_buf_tag.h \
- /usr/include/arm-linux-gnueabihf/bits/pthread_stack_min-dynamic.h \
- /usr/include/arm-linux-gnueabihf/c++/12/bits/atomic_word.h \
- /usr/include/arm-linux-gnueabihf/sys/single_threaded.h \
- /usr/include/c++/12/bits/locale_classes.h \
- /usr/include/c++/12/bits/locale_classes.tcc \
- /usr/include/c++/12/system_error \
- /usr/include/arm-linux-gnueabihf/c++/12/bits/error_constants.h \
- /usr/include/c++/12/stdexcept /usr/include/c++/12/bits/streambuf.tcc \
- /usr/include/c++/12/map /usr/include/c++/12/bits/stl_tree.h \
- /usr/include/c++/12/bits/stl_map.h \
- /usr/include/c++/12/bits/stl_multimap.h \
- /usr/include/Magick++/CoderInfo.h /usr/include/Magick++/Montage.h main.h \
- framebuffer.h
+ /usr/include/arm-linux-gnueabihf/sys/time.h \
+ /usr/include/arm-linux-gnueabihf/curl/easy.h \
+ /usr/include/arm-linux-gnueabihf/curl/multi.h \
+ /usr/include/arm-linux-gnueabihf/curl/curl.h \
+ /usr/include/arm-linux-gnueabihf/curl/urlapi.h \
+ /usr/include/arm-linux-gnueabihf/curl/options.h \
+ /usr/include/arm-linux-gnueabihf/curl/header.h \
+ /usr/include/arm-linux-gnueabihf/curl/websockets.h main.h mangadex.h

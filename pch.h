@@ -2,4 +2,4 @@
 #include <sys/mman.h>
 #include <string>
 #include <unistd.h>
-#include <GraphicsMagick/Magick++.h>
+#include <curl/curl.h>
