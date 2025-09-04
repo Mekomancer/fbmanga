@@ -26,8 +26,10 @@ class mangadex_manga {
  private:
    std::string id;
    std::string title;
+ public:
+   int getMangaIdFromTitle(std::string title);
+   int downloadChapter(int chapter_index);
 };
 //returns manga id
-std::string getIdFromTitle(std::string title);
-std::string getIdFromTags(std::vector<std::string> include_tags, std::vector<std::string> exclude_tags);
+std::string getMangaIdFromTags(std::vector<std::string> include_tags, std::vector<std::string> exclude_tags);
 

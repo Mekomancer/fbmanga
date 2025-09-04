@@ -6,3 +6,4 @@
 #include <time.h>
 #include <array>
 #include <vector>
+#include <png.h>

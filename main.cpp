@@ -1,15 +1,28 @@
 #include "pch.h"
 #include "main.h"
 #include "mangadex.h"
+#include "view.h"
 
 const char HELPOPT[] ={'-','-','h','e','l','p'};
+framebuffer fb;
 
 int main(int argn, char* argv[]) {
-  curl_global_init(CURL_GLOBAL_ALL);
+  initialize();
   parseArgs(argn, argv);
+  mangadex_manga acchi_kocchi;
+  acchi_kocchi.getMangaIdFromTitle("Acchi Kocchi");
+  acchi_kocchi.downloadChapter(1);
   curl_global_cleanup();
   return 0;
 }
+
+int initialize(){
+  fb.init();
+  curl_global_init(CURL_GLOBAL_ALL);
+  return 0;
+};
+
+
 
 int parseArgs(int argn, char* argv[]) {
   for(int narg=0;narg<argn;narg++) {
