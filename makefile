@@ -3,24 +3,26 @@ objs = $(sources:%.cpp=build/debug/%.o)
 deps = $(sources:%.cpp=build/debug/%.d)
 optflags = --std=c++23
 warnings = -Wextra -Wall -Winvalid-pch 
-curl != curlpp-config --libs
+libcurl != curlpp-config --libs
+libpng != libpng-config --libs
+libflags = $(libcurl)  $(libpng)
 cppflags = $(optflags) $(warnings) $(libflags) 
 .PHONY: clean
 fbmanga-debug: $(objs)|build/debug
-	g++ $(cppflags) $^ -o fbmanga-debug $(curl)
+	g++ $(cppflags) $^ -o fbmanga-debug
 
 include $(sources:%.cpp=build/debug/%.d)
 
 pch.h.gch: pch.h
 	g++ $(warnings) $(optflags) pch.h -o pch.h.gch
 
-$(objs): build/debug/%.o: %.cpp pch.h.gch
-	g++ $(cppflags) -c $< -o $@ $(curl)
+$(objs): build/debug/%.o: %.cpp
+	g++ $(cppflags) -c $< -o $@
 
 $(deps): build/debug/%.d: %.cpp | build/debug
 	@set -e; rm -f $@; \
 	 cc -M $(cppflags) $< > $@.$$$$; \
-	 sed 's,\(/build/debug/$*\)\.o[ :]*,\1.o $@ : pch ,g' < $@.$$$$ > $@; \
+	 sed 's,\($*\)\.o[ :]*,build/debug/\1.o $@ : pch.h.gch ,g' < $@.$$$$ > $@; \
  	 rm -f $@.$$$$
 
 build/debug: 
