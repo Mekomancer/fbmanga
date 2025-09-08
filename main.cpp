@@ -15,6 +15,10 @@ int main(int argn, char* argv[]) {
   acchi_kocchi.downloadChapter(1);
   png pngs[1];
   pngs[0].load(argv[1]);
+  assert(pngs[0].parseIHDR()!=-1);
+  fflush(0);
+  pngs[0].loadPalette();
+  pngs[0].skimUntilIDAT();
   curl_global_cleanup();
   return 0;
 }

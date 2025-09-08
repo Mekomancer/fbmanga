@@ -11,3 +11,4 @@
 #include <cassert>
 #include <libdeflate.h>
 #include <span>
+#include <bit>
