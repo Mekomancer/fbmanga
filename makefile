@@ -1,10 +1,10 @@
-sources = main.cpp mangadex.cpp view.cpp
+sources = main.cpp mangadex.cpp view.cpp png.cpp
 objs = $(sources:%.cpp=build/debug/%.o)
 deps = $(sources:%.cpp=build/debug/%.d)
 optflags = --std=c++23
 warnings = -Wextra -Wall -Winvalid-pch 
 libcurl != curlpp-config --libs
-libpng != libpng-config --libs
+# libpng != libpng-config --libs
 libflags = $(libcurl) $(libpng)
 cppflags = $(optflags) $(warnings) 
 .PHONY: clean

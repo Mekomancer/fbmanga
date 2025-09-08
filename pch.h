@@ -1,9 +1,13 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <string>
+#include <string.h>
 #include <unistd.h>
 #include <curl/curl.h>
 #include <time.h>
 #include <array>
 #include <vector>
-#include <png.h>
+#include <sys/stat.h>
+#include <cassert>
+#include <libdeflate.h>
+#include <span>
