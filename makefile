@@ -2,7 +2,7 @@ sources = main.cpp mangadex.cpp view.cpp png.cpp
 objs = $(sources:%.cpp=build/debug/%.o)
 deps = $(sources:%.cpp=build/debug/%.d)
 optflags = --std=c++23
-warnings = -Wextra -Wall -Winvalid-pch 
+warnings = -Wextra -Wall -Winvalid-pch -Wno-packed-bitfield-compat
 libcurl != curlpp-config --libs
 # libpng != libpng-config --libs
 libflags = $(libcurl) $(libpng)
