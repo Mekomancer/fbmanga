@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "view.h"
 
 int framebuffer::init(){
@@ -11,4 +10,3 @@ int framebuffer::init(){
 uint16_t& framebuffer::operator[](int x, int y){
   return addr[(479-x)*320+y];
 }
-

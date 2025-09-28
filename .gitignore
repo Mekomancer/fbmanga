@@ -3,3 +3,8 @@ pch.h.gch
 fbmanga*
 ak*
 dat/
+CMakeCache.txt
+CMakeFiles/
+README.txt
+fbitrace
+fbmanga

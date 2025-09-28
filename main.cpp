@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "main.h"
 #include "mangadex.h"
 #include "view.h"
@@ -15,7 +14,6 @@ int main(int argn, char* argv[]) {
   acchi_kocchi.downloadChapter(1);
   png pngs[1];
   pngs[0].load(argv[1]);
-  pngs[0].createIndex();
   curl_global_cleanup();
   return 0;
 }

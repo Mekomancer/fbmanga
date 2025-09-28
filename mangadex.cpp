@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "mangadex.h"
 
 
@@ -19,7 +18,7 @@ int mangadex_manga::getMangaIdFromTitle(std::string title){
   // params = {"title"= title}
   // response = curl get() or smth idk
   // return response.data("id") or smth idk
-  return -1;
+  return -1;//not implemented so return error;
 };
 
 int mangadex_manga::downloadChapter(int chapter_index){

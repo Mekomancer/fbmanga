@@ -1,0 +1,243 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.31/Modules/CMakeDetermineSystem.cmake:205 (message)"
+      - "CMakeLists.txt:11 (project)"
+    message: |
+      The system is: Linux - 6.12.47+rpt-rpi-v8 - aarch64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.31/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:11 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /usr/bin/clang++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is Clang, found in:
+        /home/mark/fbmanga/CMakeFiles/3.31.6/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
+      - "/usr/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:11 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36"
+      binary: "/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/usr/bin/clang-scan-deps-19"
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36'
+        
+        Run Build Command(s): /usr/bin/ninja -v cmTC_bb068
+        [1/2] /usr/bin/clang++   -std=c++23   -v -MD -MT CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp
+        Raspbian clang version 19.1.7 (3+rpi2)
+        Target: arm-unknown-linux-gnueabihf
+        Thread model: posix
+        InstalledDir: /usr/lib/llvm-19/bin
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/12
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7.5.0
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/8
+        Selected GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14
+        Candidate multilib: .;@m32
+        Selected multilib: .;@m32
+         (in-process)
+         "/usr/lib/llvm-19/bin/clang" -cc1 -triple armv7-unknown-linux-gnueabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -target-cpu generic -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature -fp16 -target-feature -vfp4 -target-feature -vfp4d16 -target-feature -vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature -fp-armv8d16 -target-feature -fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-abi aapcs-linux -mfloat-abi hard -debugger-tuning=gdb -fdebug-compilation-dir=/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36 -v -fcoverage-compilation-dir=/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36 -resource-dir /usr/lib/llvm-19/lib/clang/19 -dependency-file CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14 -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/arm-linux-gnueabihf/c++/14 -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14/backward -internal-isystem /usr/lib/llvm-19/lib/clang/19/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../arm-linux-gnueabihf/include -internal-externc-isystem /usr/include/arm-linux-gnueabihf -internal-externc-isystem /include -internal-externc-isystem /usr/include -std=c++23 -fdeprecated-macro -ferror-limit 19 -fno-signed-char -fgnuc-version=4.2.1 -fno-implicit-modules -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp
+        clang -cc1 version 19.1.7 based upon LLVM 19.1.7 default target arm-linux-gnueabihf
+        ignoring nonexistent directory "/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../arm-linux-gnueabihf/include"
+        ignoring nonexistent directory "/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14
+         /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/arm-linux-gnueabihf/c++/14
+         /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14/backward
+         /usr/lib/llvm-19/lib/clang/19/include
+         /usr/local/include
+         /usr/include/arm-linux-gnueabihf
+         /usr/include
+        End of search list.
+        [2/2] : && /usr/bin/clang++  -v -Wl,-v CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_bb068   && :
+        Raspbian clang version 19.1.7 (3+rpi2)
+        Target: arm-unknown-linux-gnueabihf
+        Thread model: posix
+        InstalledDir: /usr/lib/llvm-19/bin
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/12
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7.5.0
+        Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/8
+        Selected GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14
+        Candidate multilib: .;@m32
+        Selected multilib: .;@m32
+         "/usr/bin/arm-linux-gnueabihf-ld" -EL -X --hash-style=gnu --build-id --eh-frame-hdr -m armelf_linux_eabi -pie -dynamic-linker /lib/ld-linux-armhf.so.3 -o cmTC_bb068 /lib/arm-linux-gnueabihf/Scrt1.o /lib/arm-linux-gnueabihf/crti.o /usr/lib/gcc/arm-linux-gnueabihf/14/crtbeginS.o -L/usr/lib/gcc/arm-linux-gnueabihf/14 -L/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../lib -L/lib/arm-linux-gnueabihf -L/lib/../lib -L/usr/lib/arm-linux-gnueabihf -L/usr/lib/../lib -L/usr/lib/llvm-19/bin/../lib -L/lib -L/usr/lib -v CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/arm-linux-gnueabihf/14/crtendS.o /lib/arm-linux-gnueabihf/crtn.o
+        GNU ld (GNU Binutils for Raspbian) 2.44
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:182 (message)"
+      - "/usr/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:11 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14]
+          add: [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/arm-linux-gnueabihf/c++/14]
+          add: [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14/backward]
+          add: [/usr/lib/llvm-19/lib/clang/19/include]
+          add: [/usr/local/include]
+          add: [/usr/include/arm-linux-gnueabihf]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14] ==> [/usr/include/c++/14]
+        collapse include dir [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/arm-linux-gnueabihf/c++/14] ==> [/usr/include/arm-linux-gnueabihf/c++/14]
+        collapse include dir [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14/backward] ==> [/usr/include/c++/14/backward]
+        collapse include dir [/usr/lib/llvm-19/lib/clang/19/include] ==> [/usr/lib/llvm-19/lib/clang/19/include]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/usr/include/arm-linux-gnueabihf] ==> [/usr/include/arm-linux-gnueabihf]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/usr/include/c++/14;/usr/include/arm-linux-gnueabihf/c++/14;/usr/include/c++/14/backward;/usr/lib/llvm-19/lib/clang/19/include;/usr/local/include;/usr/include/arm-linux-gnueabihf;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
+      - "/usr/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:11 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
+        ignore line: [Change Dir: '/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36']
+        ignore line: []
+        ignore line: [Run Build Command(s): /usr/bin/ninja -v cmTC_bb068]
+        ignore line: [[1/2] /usr/bin/clang++   -std=c++23   -v -MD -MT CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Raspbian clang version 19.1.7 (3+rpi2)]
+        ignore line: [Target: arm-unknown-linux-gnueabihf]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /usr/lib/llvm-19/bin]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/12]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7.5.0]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/8]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m32]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m32]
+        ignore line: [ (in-process)]
+        ignore line: [ "/usr/lib/llvm-19/bin/clang" -cc1 -triple armv7-unknown-linux-gnueabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -target-cpu generic -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature -fp16 -target-feature -vfp4 -target-feature -vfp4d16 -target-feature -vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature -fp-armv8d16 -target-feature -fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-abi aapcs-linux -mfloat-abi hard -debugger-tuning=gdb -fdebug-compilation-dir=/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36 -v -fcoverage-compilation-dir=/home/mark/fbmanga/CMakeFiles/CMakeScratch/TryCompile-KWKK36 -resource-dir /usr/lib/llvm-19/lib/clang/19 -dependency-file CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14 -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/arm-linux-gnueabihf/c++/14 -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14/backward -internal-isystem /usr/lib/llvm-19/lib/clang/19/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../arm-linux-gnueabihf/include -internal-externc-isystem /usr/include/arm-linux-gnueabihf -internal-externc-isystem /include -internal-externc-isystem /usr/include -std=c++23 -fdeprecated-macro -ferror-limit 19 -fno-signed-char -fgnuc-version=4.2.1 -fno-implicit-modules -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [clang -cc1 version 19.1.7 based upon LLVM 19.1.7 default target arm-linux-gnueabihf]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../arm-linux-gnueabihf/include"]
+        ignore line: [ignoring nonexistent directory "/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14]
+        ignore line: [ /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/arm-linux-gnueabihf/c++/14]
+        ignore line: [ /usr/lib/gcc/arm-linux-gnueabihf/14/../../../../include/c++/14/backward]
+        ignore line: [ /usr/lib/llvm-19/lib/clang/19/include]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /usr/include/arm-linux-gnueabihf]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [[2/2] : && /usr/bin/clang++  -v -Wl -v CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_bb068   && :]
+        ignore line: [Raspbian clang version 19.1.7 (3+rpi2)]
+        ignore line: [Target: arm-unknown-linux-gnueabihf]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /usr/lib/llvm-19/bin]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/12]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/7.5.0]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/8]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/14]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m32]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m32]
+        link line: [ "/usr/bin/arm-linux-gnueabihf-ld" -EL -X --hash-style=gnu --build-id --eh-frame-hdr -m armelf_linux_eabi -pie -dynamic-linker /lib/ld-linux-armhf.so.3 -o cmTC_bb068 /lib/arm-linux-gnueabihf/Scrt1.o /lib/arm-linux-gnueabihf/crti.o /usr/lib/gcc/arm-linux-gnueabihf/14/crtbeginS.o -L/usr/lib/gcc/arm-linux-gnueabihf/14 -L/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../lib -L/lib/arm-linux-gnueabihf -L/lib/../lib -L/usr/lib/arm-linux-gnueabihf -L/usr/lib/../lib -L/usr/lib/llvm-19/bin/../lib -L/lib -L/usr/lib -v CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/arm-linux-gnueabihf/14/crtendS.o /lib/arm-linux-gnueabihf/crtn.o]
+          arg [/usr/bin/arm-linux-gnueabihf-ld] ==> ignore
+          arg [-EL] ==> ignore
+          arg [-X] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-m] ==> ignore
+          arg [armelf_linux_eabi] ==> ignore
+          arg [-pie] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib/ld-linux-armhf.so.3] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_bb068] ==> ignore
+          arg [/lib/arm-linux-gnueabihf/Scrt1.o] ==> obj [/lib/arm-linux-gnueabihf/Scrt1.o]
+          arg [/lib/arm-linux-gnueabihf/crti.o] ==> obj [/lib/arm-linux-gnueabihf/crti.o]
+          arg [/usr/lib/gcc/arm-linux-gnueabihf/14/crtbeginS.o] ==> obj [/usr/lib/gcc/arm-linux-gnueabihf/14/crtbeginS.o]
+          arg [-L/usr/lib/gcc/arm-linux-gnueabihf/14] ==> dir [/usr/lib/gcc/arm-linux-gnueabihf/14]
+          arg [-L/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../lib] ==> dir [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../lib]
+          arg [-L/lib/arm-linux-gnueabihf] ==> dir [/lib/arm-linux-gnueabihf]
+          arg [-L/lib/../lib] ==> dir [/lib/../lib]
+          arg [-L/usr/lib/arm-linux-gnueabihf] ==> dir [/usr/lib/arm-linux-gnueabihf]
+          arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+          arg [-L/usr/lib/llvm-19/bin/../lib] ==> dir [/usr/lib/llvm-19/bin/../lib]
+          arg [-L/lib] ==> dir [/lib]
+          arg [-L/usr/lib] ==> dir [/usr/lib]
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_bb068.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lc] ==> lib [c]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [/usr/lib/gcc/arm-linux-gnueabihf/14/crtendS.o] ==> obj [/usr/lib/gcc/arm-linux-gnueabihf/14/crtendS.o]
+          arg [/lib/arm-linux-gnueabihf/crtn.o] ==> obj [/lib/arm-linux-gnueabihf/crtn.o]
+        ignore line: [GNU ld (GNU Binutils for Raspbian) 2.44]
+        ignore line: []
+        ignore line: []
+        collapse library dir [/usr/lib/gcc/arm-linux-gnueabihf/14] ==> [/usr/lib/gcc/arm-linux-gnueabihf/14]
+        collapse library dir [/usr/lib/gcc/arm-linux-gnueabihf/14/../../../../lib] ==> [/usr/lib]
+        collapse library dir [/lib/arm-linux-gnueabihf] ==> [/lib/arm-linux-gnueabihf]
+        collapse library dir [/lib/../lib] ==> [/lib]
+        collapse library dir [/usr/lib/arm-linux-gnueabihf] ==> [/usr/lib/arm-linux-gnueabihf]
+        collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+        collapse library dir [/usr/lib/llvm-19/bin/../lib] ==> [/usr/lib/llvm-19/lib]
+        collapse library dir [/lib] ==> [/lib]
+        collapse library dir [/usr/lib] ==> [/usr/lib]
+        implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+        implicit objs: [/lib/arm-linux-gnueabihf/Scrt1.o;/lib/arm-linux-gnueabihf/crti.o;/usr/lib/gcc/arm-linux-gnueabihf/14/crtbeginS.o;/usr/lib/gcc/arm-linux-gnueabihf/14/crtendS.o;/lib/arm-linux-gnueabihf/crtn.o]
+        implicit dirs: [/usr/lib/gcc/arm-linux-gnueabihf/14;/usr/lib;/lib/arm-linux-gnueabihf;/lib;/usr/lib/arm-linux-gnueabihf;/usr/lib/llvm-19/lib]
+        implicit fwks: []
+      
+      
+...

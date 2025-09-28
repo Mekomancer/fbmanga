@@ -1,8 +1,12 @@
-const std::array<uint8_t,8> png_file_signature = {137, 'P','N','G','\r','\n',26,'\n'};
-
+const char png_file_signature[] = {137, 'P','N','G','\r','\n',26,'\n'};
+enum class chunk_type: uint32_t{
+  IHDR = 0x52444849,//0x49 48 44 52,
+  IDAT = 0x54414449,//0x49 44 41 54,
+  PLTE = 0x45544C50,//0x50 4C 54 45,
+};
 struct png_chunk{
   uint32_t length;
-  uint32_t type;
+  chunk_type type;
   char *data;
   uint32_t crc;
 };
@@ -14,27 +18,14 @@ enum class png_pixel_type{
   alpha,//yes this ',' is legal
 };
 
-struct color888{
-  uint8_t red;
-  uint8_t green;
-  uint8_t blue;
-};
-
-struct color565{
-  uint8_t red:5; 
-  uint8_t green:6; 
-  uint8_t blue:5;
-}__attribute__ ((packed));
-
-static_assert(sizeof(color565)==2);
 
 class png{
   private:
     char* addr;
-    bool loaded = false;
     struct stat stats;
     std::vector<png_chunk> index;
-    std::vector<color888> palette;
+    std::vector<uint16_t> palette;
+    int palette_index=-1;
     uint32_t width;
     uint32_t height;
     uint8_t bit_depth;
@@ -42,12 +33,14 @@ class png{
     uint8_t compression_method;
     uint8_t filter_method;
     uint8_t interlace_method;
+    
+    int validate();
+    int checkOrdering();
   public:
     int load(std::string);//calls validate(), returns -1 if mmap() or validate() fails;
-    int validate(int fd);
     int createIndex();
     int parseHeader();
-    int loadPalette();
+    int loadPalette(png_chunk chunk);
     png();//does nothing, use load();
     ~png();//munmap and other stuff;
 };
