@@ -1,3 +1,0 @@
-/home/mark/fbmanga/CMakeFiles/fbmanga.dir
-/home/mark/fbmanga/CMakeFiles/edit_cache.dir
-/home/mark/fbmanga/CMakeFiles/rebuild_cache.dir
