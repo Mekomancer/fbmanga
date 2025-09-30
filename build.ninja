@@ -122,7 +122,7 @@ build CMakeFiles/fbmanga.dir/CXX.dd | /home/mark/fbmanga/CMakeFiles/fbmanga.dir/
 
 build fbmanga: CXX_EXECUTABLE_LINKER__fbmanga_ CMakeFiles/fbmanga.dir/main.cpp.o CMakeFiles/fbmanga.dir/png.cpp.o CMakeFiles/fbmanga.dir/view.cpp.o CMakeFiles/fbmanga.dir/mangadex.cpp.o
   LINK_FLAGS = --stdlib=libc++
-  LINK_LIBRARIES = -lcurl
+  LINK_LIBRARIES = -lcurl  -ldeflate
   OBJECT_DIR = CMakeFiles/fbmanga.dir
   POST_BUILD = :
   PRE_LINK = :

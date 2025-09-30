@@ -44,7 +44,8 @@ target_precompile_headers(fbmanga
     <cstring>
     <print>
     <mdspan>
+    <format>
 )
 
-target_link_libraries(fbmanga curl)
+target_link_libraries(fbmanga curl deflate)
 
