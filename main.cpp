@@ -12,8 +12,8 @@ int main(int argn, char* argv[]) {
   mangadex_manga acchi_kocchi;
   acchi_kocchi.getMangaIdFromTitle("Acchi Kocchi");
   acchi_kocchi.downloadChapter(1);
-  png pngs[1];
-  pngs[0].load(argv[1]);
+ /* png pngs[1];
+  pngs[0].load(argv[1]);*/
   curl_global_cleanup();
   return 0;
 }

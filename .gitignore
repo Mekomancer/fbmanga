@@ -4,3 +4,4 @@ CMake*
 fbmanga
 cmake*
 !CMakeLists.txt
+.ninja*

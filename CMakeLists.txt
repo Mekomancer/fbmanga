@@ -45,6 +45,10 @@ target_precompile_headers(fbmanga
     <print>
     <mdspan>
     <format>
+    <zlib.h>
+    <map>
+    <fstream>
+    "debug.h"
 )
 
 target_link_libraries(fbmanga curl deflate)

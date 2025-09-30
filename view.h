@@ -1,6 +1,7 @@
 class image{
   private:
-    size
+    int size;
+};
 
 
 class framebuffer{
