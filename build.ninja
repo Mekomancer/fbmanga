@@ -110,7 +110,22 @@ build CMakeFiles/fbmanga.dir/mangadex.cpp.o: CXX_COMPILER__fbmanga_scanned_ /hom
   OBJECT_FILE_DIR = CMakeFiles/fbmanga.dir
   dyndep = CMakeFiles/fbmanga.dir/CXX.dd
 
-build CMakeFiles/fbmanga.dir/CXX.dd | /home/mark/fbmanga/CMakeFiles/fbmanga.dir/CXXModules.json CMakeFiles/fbmanga.dir/main.cpp.o.modmap CMakeFiles/fbmanga.dir/png.cpp.o.modmap CMakeFiles/fbmanga.dir/view.cpp.o.modmap CMakeFiles/fbmanga.dir/mangadex.cpp.o.modmap: CXX_DYNDEP__fbmanga_ CMakeFiles/fbmanga.dir/main.cpp.o.ddi CMakeFiles/fbmanga.dir/png.cpp.o.ddi CMakeFiles/fbmanga.dir/view.cpp.o.ddi CMakeFiles/fbmanga.dir/mangadex.cpp.o.ddi | /home/mark/fbmanga/CMakeFiles/fbmanga.dir/CXXDependInfo.json
+build CMakeFiles/fbmanga.dir/stream.cpp.o.ddi: CXX_SCAN__fbmanga_ /home/mark/fbmanga/stream.cpp | CMakeFiles/fbmanga.dir/cmake_pch.hxx CMakeFiles/fbmanga.dir/cmake_pch.hxx.pch || cmake_object_order_depends_target_fbmanga
+  DEP_FILE = CMakeFiles/fbmanga.dir/stream.cpp.o.ddi.d
+  DYNDEP_INTERMEDIATE_FILE = CMakeFiles/fbmanga.dir/stream.cpp.o.ddi
+  FLAGS = -std=c++23 --stdlib=libc++ -Winvalid-pch -include-pch /home/mark/fbmanga/CMakeFiles/fbmanga.dir/cmake_pch.hxx.pch -include /home/mark/fbmanga/CMakeFiles/fbmanga.dir/cmake_pch.hxx
+  OBJ_FILE = CMakeFiles/fbmanga.dir/stream.cpp.o
+  PREPROCESSED_OUTPUT_FILE = CMakeFiles/fbmanga.dir/stream.cpp.o.ddi.i
+
+build CMakeFiles/fbmanga.dir/stream.cpp.o: CXX_COMPILER__fbmanga_scanned_ /home/mark/fbmanga/stream.cpp | CMakeFiles/fbmanga.dir/cmake_pch.hxx CMakeFiles/fbmanga.dir/cmake_pch.hxx.pch CMakeFiles/fbmanga.dir/stream.cpp.o.modmap || cmake_object_order_depends_target_fbmanga CMakeFiles/fbmanga.dir/CXX.dd
+  DEP_FILE = CMakeFiles/fbmanga.dir/stream.cpp.o.d
+  DYNDEP_MODULE_MAP_FILE = CMakeFiles/fbmanga.dir/stream.cpp.o.modmap
+  FLAGS = -std=c++23 --stdlib=libc++ -Winvalid-pch -include-pch /home/mark/fbmanga/CMakeFiles/fbmanga.dir/cmake_pch.hxx.pch -include /home/mark/fbmanga/CMakeFiles/fbmanga.dir/cmake_pch.hxx
+  OBJECT_DIR = CMakeFiles/fbmanga.dir
+  OBJECT_FILE_DIR = CMakeFiles/fbmanga.dir
+  dyndep = CMakeFiles/fbmanga.dir/CXX.dd
+
+build CMakeFiles/fbmanga.dir/CXX.dd | /home/mark/fbmanga/CMakeFiles/fbmanga.dir/CXXModules.json CMakeFiles/fbmanga.dir/main.cpp.o.modmap CMakeFiles/fbmanga.dir/png.cpp.o.modmap CMakeFiles/fbmanga.dir/view.cpp.o.modmap CMakeFiles/fbmanga.dir/mangadex.cpp.o.modmap CMakeFiles/fbmanga.dir/stream.cpp.o.modmap: CXX_DYNDEP__fbmanga_ CMakeFiles/fbmanga.dir/main.cpp.o.ddi CMakeFiles/fbmanga.dir/png.cpp.o.ddi CMakeFiles/fbmanga.dir/view.cpp.o.ddi CMakeFiles/fbmanga.dir/mangadex.cpp.o.ddi CMakeFiles/fbmanga.dir/stream.cpp.o.ddi | /home/mark/fbmanga/CMakeFiles/fbmanga.dir/CXXDependInfo.json
 
 
 # =============================================================================
@@ -120,7 +135,7 @@ build CMakeFiles/fbmanga.dir/CXX.dd | /home/mark/fbmanga/CMakeFiles/fbmanga.dir/
 #############################################
 # Link the executable fbmanga
 
-build fbmanga: CXX_EXECUTABLE_LINKER__fbmanga_ CMakeFiles/fbmanga.dir/main.cpp.o CMakeFiles/fbmanga.dir/png.cpp.o CMakeFiles/fbmanga.dir/view.cpp.o CMakeFiles/fbmanga.dir/mangadex.cpp.o
+build fbmanga: CXX_EXECUTABLE_LINKER__fbmanga_ CMakeFiles/fbmanga.dir/main.cpp.o CMakeFiles/fbmanga.dir/png.cpp.o CMakeFiles/fbmanga.dir/view.cpp.o CMakeFiles/fbmanga.dir/mangadex.cpp.o CMakeFiles/fbmanga.dir/stream.cpp.o
   LINK_FLAGS = --stdlib=libc++
   LINK_LIBRARIES = -lcurl  -ldeflate
   OBJECT_DIR = CMakeFiles/fbmanga.dir

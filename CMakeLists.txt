@@ -18,6 +18,7 @@ add_executable(fbmanga
   png.cpp
   view.cpp
   mangadex.cpp
+  stream.cpp
 )
 
 target_compile_options(fbmanga
@@ -47,7 +48,9 @@ target_precompile_headers(fbmanga
     <format>
     <zlib.h>
     <map>
-    <fstream>
+    <thread>
+    <cstdio>
+    <unistd.h>
     "debug.h"
 )
 

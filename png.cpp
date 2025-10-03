@@ -3,53 +3,8 @@
 
 extern framebuffer fb;
 
-png::png(std::istream png_datastream){
-  datastream = &png_datastream;
-}
-/*
-int png::load(std::string filename){
-  dprf("loading png {:?}\n",filename);
-  int fd = open(filename.c_str(),O_RDONLY);
-  char buf[8];
-  dprf("Checking file signature...\n");
-  read(fd, buf,8);
-  dprf("file sig: {:?}\n",buf);
-  dprf("png  sig: {:?}\n",png_signature);
-  int same = memcmp(buf,png_signature,8);
-  if(same==0){
-    dprf("File starts with the png file signature\n");
-  }else{
-    dprf("ERR: Not a png file\n");
-  };
-  if (same!= 0){ 
-    return -1;
-  }
-  fstat(fd,&stats);
-  png_size = stats.st_size;
-  png_addr = static_cast<char*>(mmap(0,png_size,PROT_READ | PROT_WRITE,MAP_PRIVATE,fd,0)); 
-  if (png_addr == MAP_FAILED){ return -1;}
-  dprf("Done loading, closing fd...");
-  close(fd);
-  dprf("Done\n");
-  createIndex();
-  parseHeader();
-  if(color_type == png_pixel_type::palette){
-    if(palette_index != -1 ){
-      loadPalette(index[palette_index]);
-    } else {
-      dprf("ERR: PNG uses indexed color, but no palette/color index was found\n");
-    }
-  }
-  if(validate()==-1){
-    return -1;
-  }
-  getData();
-  munmap(png_addr,png_size);
-  png_addr = nullptr;
+int png_t::decode(datastream *png_data){
   return 0;
-}
-*/
-png::~png(){
 }
 
 /*int png::validate(){
@@ -88,7 +43,7 @@ png::~png(){
   } while(cur-png_addr<stats.st_size);
   return 0;
 }*/
-int png::decodePalette(){
+int png_t::decodePalette(){
 /*
   dprf("Loading palette...");
   if(chunk.type != chunk_type::PLTE){
@@ -122,7 +77,7 @@ int png::decodePalette(){
   return 0;
 };
 
-int png::decodeHeader(){
+int png_t::decodeHeader(){
 /*  dprf("Parsing header...");
   auto hdr = index[0];
   if(hdr.type != chunk_type::IHDR){
@@ -165,9 +120,9 @@ int png::decodeHeader(){
   */ return 0;
 };
 
-constexpr std::string colorTypeString(color_type val){ 
+constexpr std::string colorTypeString(color_type_t val){ 
   switch (val){
-   using enum color_type;
+   using enum color_type_t;
     case greyscale:
       return "0: Greyscale";
     case truecolor:
@@ -210,7 +165,7 @@ constexpr std::string libdeto_string(enum libdeflate_result val){
 }*/
     
 
-int png::decompress(){/*
+int png_t::decompress(){/*
   dprf("Extracting image data...");
   size_t memlen = 0;
   for(png_chunk chunk : index){
@@ -235,7 +190,7 @@ int png::decompress(){/*
   libdeflate_decompressor *decomp_ptr = libdeflate_alloc_decompressor();
   uint64_t img_mem_len;
   if(((width * bit_depth) % 8) == 0){
-    img_mem_len = height*(((width * bit_depth)/8) + 1);//byte aligned so no partial byte but add one for filter byte 
+img_m:em_len = height*(((width * bit_depth)/8) + 1);//byte aligned so no partial byte but add one for filter byte 
   } else {
     img_mem_len = height * (((width*bit_depth)/8) + 2); //compensate for partial byte being truncated due to intger division and for filter byte
   }
