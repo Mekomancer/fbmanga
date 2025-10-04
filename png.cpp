@@ -2,127 +2,126 @@
 #include "view.h"
 
 extern framebuffer fb;
+static constexpr void bswap(auto *val){
+  *val = std::byteswap(*val);
+};
 
-int png_t::decode(datastream *png_data){
+int png::decode(std::function<int(char*,int)> rfunc){
+  dprf("Decoding png...\n");
+  _read = rfunc;
+  dprf("  Checking file signature...\n");
+  std::array<char,8> file_sig;
+  _read(file_sig.data(),8);
+  dprf("    file sig: {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}\n",file_sig[0],file_sig[1],file_sig[2],file_sig[3],file_sig[4],file_sig[5],file_sig[6],file_sig[7]);
+  dprf("    png  sig: {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}\n",png_sig[0],png_sig[1],png_sig[2],png_sig[3],png_sig[4],png_sig[5],png_sig[6],png_sig[7]);
+  if(file_sig == png_sig){
+    dprf("    File starts with the png file signature\n");
+  }else{
+    dprf("ERR: Not a png file\n");
+    return -1;
+  };
+  decodeHeader();
+  uint32_t crc;
+  read(&crc);
+  bool ended = false;
+  while(!ended){
+    uint32_t length;
+    read(&length); bswap(&length);
+    std::array<char,4> buf;
+    _read(buf.data(),4);
+    if(buf == chunk_type["PLTE"]){
+      decodePalette(length);
+    } else if(buf == chunk_type["IDAT"]){
+      decodeImageData(length);
+    } else if(buf == chunk_type["IEND"]){
+      ended = true;
+    }
+    uint32_t crc;
+    read(&crc);
+  };
   return 0;
 }
 
-/*int png::validate(){
- *
-  dprf("Validating PNG...");
-  dprf("Checking for critcal chunks
-  idat_index = std::find(index.begin(),index.end(),chunk_type::IDAT);
-  dprf("IHDR first?...");
-  dprf("{:}", index[0].type ==  chunk_type::IHDR);
-  dprf("PLTE Before IDAT?", 
-  PLTE.length % 3 == 0
-*
-  return 0;
-};
-
-*int png::createIndex(){
-  dprf("Creating index...\n"); 
-  char *cur = png_addr + 8;//the file sig is 8 bytes long
-  png_chunk cur_chunk;
-  int i=0;
-  do{
-  dprf("chunk {:d}",i);
-  i++;
-  cur_chunk.length = readBytes<uint32_t>(&cur, true);
-  dprf("\tlength: {:d}",cur_chunk.length); 
-  cur_chunk.type = static_cast<chunk_type>(readBytes<uint32_t>(&cur, false));
-  dprf("\ttype: {:.4s}",reinterpret_cast<char*>(&cur_chunk.type));
-  cur_chunk.data = cur; 
-  cur+=cur_chunk.length;
-  cur_chunk.crc = readBytes<uint32_t>(&cur, false);
-  dprf("\tcrc: {:d}",cur_chunk.crc);
-  index.push_back(cur_chunk);
-  if(cur_chunk.type == chunk_type::PLTE){
-    palette_index = i-1;
-  }
-  } while(cur-png_addr<stats.st_size);
-  return 0;
-}*/
-int png_t::decodePalette(){
-/*
-  dprf("Loading palette...");
-  if(chunk.type != chunk_type::PLTE){
-    dprf("ERR: tried to load palette from a non-palette chunk {:.5?}", reinterpret_cast<char*>(&(chunk.type)));
+int png::decodePalette(uint32_t length){
+  dprf("Decoding palette...");
+  if( length % 3 != 0 ){
+    dprf("ERR: Invalid PLTE chunk, PLTE length ({:d} bytes) is not divisible by 3", length);
     return -1;
   }
-  if( chunk.length % 3 != 0 ){
-    dprf("ERR: Invalid PLTE chunk, PLTE length ({:d} bytes) is not divisible by 3", chunk.length);
-    return -1;
-  }
-  char *cur_byte = chunk.data;
-  palette.resize(chunk.length/3);
-  dprf("color entries: {:d}",chunk.length/3);
-  for(int i=0; (i*3) < chunk.length; i++){
+  palette.resize(length/3);
+  dprf("color entries: {:d}\n",length/3);
+  for(int i=0; (i*3) < length; i++){
     uint8_t red,green,blue = 0;
-    red = *cur_byte; cur_byte++;
-    green = *cur_byte; cur_byte++;
-    blue = *cur_byte; cur_byte++;
+    read(&red);
+    read(&green);
+    read(&blue);
     palette[i] = rgb888topixel(red,green,blue);
-    dprf("  {:3>d}: {:02X} {:02X} {:02X}",i,red,green,blue);
+    dprf("  {:3>d}: {:02X} {:02X} {:02X}\n",i,red,green,blue);
   };
 #ifndef NDEBUG
-  for(int i = chunk.length/3 - 1; i >=0; i--){ 
+  for(int i = length/3 - 1; i >=0; i--){ 
     for(int dx = 0; dx < 12; dx++){
       for(int dy = 0; dy < 12; dy++){
-	fb[dx,12*(25+i-chunk.length/3)+dy] = palette[i];
+	fb[dx,12*(25+i-length/3)+dy] = palette[i];
       }
     }
   }
-#endif*/
+#endif
   return 0;
 };
 
-int png_t::decodeHeader(){
-/*  dprf("Parsing header...");
-  auto hdr = index[0];
-  if(hdr.type != chunk_type::IHDR){
-    dprf("ERR: First chunk is not IHDR, (got {:4?})",reinterpret_cast<char*>(&hdr.type));
-  }
-  char *cur = hdr.data;
+int png::decodeHeader(){
+  dprf("Decoding header...\n");
   bool bad_header = false;
-  width = readBytes<uint32_t>(&cur, true);
-  dprf("Width: {:}, ", width);
-  height = readBytes<uint32_t>(&cur, true);
-  dprf("Height: {:}, ", height);
-  bit_depth = readBytes<uint8_t>(&cur, false);
-  dprf("Bit depth: {:}, ", bit_depth);
-  color_type = static_cast<png_pixel_type>(readBytes<uint8_t>(&cur, false));
-  dprf("Color type: {:}", to_string(color_type));
-  compression_method = readBytes<uint8_t>(&cur, false);
-  if(compression_method == 0){
-    dprf("Compression method: 0: DEFLATE");
+  uint32_t length = 0;
+  read(&length); bswap(&length);
+  if(length != 13){
+    dprf("ERR: First chunk's length is not 13, (got {:})\n",length);
+    return -1;
+  };
+  std::array<char,4> buf;
+  _read(buf.data(),4);
+  if(buf != chunk_type["IHDR"]){
+    dprf("ERR: First chunk is not IHDR, (got {:?}{:?}{:?}{:?})\n",buf[0],buf[1],buf[2],buf[3]);
+    return -1;
+  }
+  read(&stats.width); bswap(&stats.width);
+  dprf("Width: {:}, ", stats.width);
+  read(&stats.height); bswap(&stats.height);
+  dprf("Height: {:}, ", stats.height);
+  read(&stats.bit_depth);
+  dprf("Bit depth: {:}, ", stats.bit_depth);
+  read(&stats.color_type);
+  dprf("Color type: {:}\n", colorTypeString(stats.color_type));
+  read(&stats.compression_method);
+  if(stats.compression_method == 0){
+    dprf("Compression method: 0: DEFLATE\n");
   } else {
-    dprf("ERR: Unknown compression method {:}", compression_method);
+    dprf("ERR: Unknown compression method {:}\n", stats.compression_method);
     bad_header = true;
   }
-  filter_method = readBytes<uint8_t>(&cur, false);
-  if(filter_method == 0){
-    dprf("Filter method: 0: Adaptive filtering with five basic filter types");
+  read(&stats.filter_method);
+  if(stats.filter_method == 0){
+    dprf("Filter method: 0: Adaptive filtering with five basic filter types\n");
   } else {
-    dprf("ERR: Unknown filter method {:}", filter_method);
+    dprf("ERR: Unknown filter method {:}\n", stats.filter_method);
     bad_header = true;
   }
-  interlace_method = readBytes<uint8_t>(&cur, false);
-  if(interlace_method == 0){
-    dprf("Interlace method: 0: No interlace");
-  }else if( interlace_method == 1){
-    dprf("Interlace method: 1: Adam7 interlace");
+  read(&stats.interlace_method);
+  if(stats.interlace_method == 0){
+    dprf("Interlace method: 0: No interlace\n");
+  }else if( stats.interlace_method == 1){
+    dprf("Interlace method: 1: Adam7 interlace\n");
   } else {
-    dprf("ERR: Unknown filter method {:}", interlace_method);
+    dprf("ERR: Unknown filter method {:}\n", stats.interlace_method);
     bad_header = true;
   }
   return bad_header?-1:0;
-  */ return 0;
 };
 
-constexpr std::string colorTypeString(color_type_t val){ 
+constexpr std::string colorTypeString(color_type val){ 
   switch (val){
-   using enum color_type_t;
+   using enum color_type;
     case greyscale:
       return "0: Greyscale";
     case truecolor:
@@ -146,27 +145,8 @@ std::map<std::string, std::array<char,4>> chunk_type{
   {"tRNS", {0x74,0x52,0x4E,0x52}},
   //... more chunks types exist, but i'm too lazy
 };
-/*
-constexpr std::string libdeto_string(enum libdeflate_result val){
-	 The data would have decompressed to more than 'out_nbytes_avail'
-	 * bytes.  
-  switch (val){
-   case LIBDEFLATE_SUCCESS:
-     return "Decompression was successful.";
-   case LIBDEFLATE_BAD_DATA:
-     return "Decompression failed because the compressed data was invalid, corrupt, or otherwise unsupported.";
-   case LIBDEFLATE_SHORT_OUTPUT:
-     return "A NULL 'actual_out_nbytes_ret' was provided, but the data would have decompressed to fewer than 'out_nbytes_avail' bytes.";
-   case LIBDEFLATE_INSUFFICIENT_SPACE:
-     return "The data would have decompressed to more than 'out_nbytes_avail' bytes.";
-   default:
-     return "Unknown libdeflate decompression result";
-  }
-}*/
-    
-
-int png_t::decompress(){/*
-  dprf("Extracting image data...");
+int png::decodeImageData(uint32_t length){
+/*  dprf("Extracting image data...");
   size_t memlen = 0;
   for(png_chunk chunk : index){
     if(chunk.type == chunk_type::IDAT){
@@ -190,7 +170,7 @@ int png_t::decompress(){/*
   libdeflate_decompressor *decomp_ptr = libdeflate_alloc_decompressor();
   uint64_t img_mem_len;
   if(((width * bit_depth) % 8) == 0){
-img_m:em_len = height*(((width * bit_depth)/8) + 1);//byte aligned so no partial byte but add one for filter byte 
+    img_mem_len = height*(((width * bit_depth)/8) + 1);//byte aligned so no partial byte but add one for filter byte 
   } else {
     img_mem_len = height * (((width*bit_depth)/8) + 2); //compensate for partial byte being truncated due to intger division and for filter byte
   }

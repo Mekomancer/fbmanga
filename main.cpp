@@ -3,7 +3,7 @@
 #include "view.h"
 #include "png.h"
 
-const char HELPOPT[] ={'-','-','h','e','l','p'};
+const char HELPOPT[6] ={'-','-','h','e','l','p'};
 framebuffer fb;
 
 int main(int argn, char* argv[]) {
@@ -11,8 +11,11 @@ int main(int argn, char* argv[]) {
   parseArgs(argn, argv);
   mangadex_manga acchi_kocchi;
   acchi_kocchi.getMangaIdFromTitle("Acchi Kocchi");
-  filestream png;
-  png.fd = open(argv[1],O_RDWR);
+  acchi_kocchi.downloadChapter(1);
+  png pngs[1];
+  int png_fd = open(argv[1],O_RDWR);
+  auto rfunc = [png_fd](char* buf, int cnt){return read(png_fd,buf,cnt);};
+  pngs[0].decode(rfunc);
   curl_global_cleanup();
   return 0;
 }

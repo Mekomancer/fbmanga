@@ -5,3 +5,4 @@ fbmanga
 cmake*
 !CMakeLists.txt
 .ninja*
+build.ninja
