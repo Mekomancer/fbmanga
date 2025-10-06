@@ -12,6 +12,15 @@ enum class color_type:uint8_t{
 
 constexpr std::string colorTypeString(color_type val); 
 
+enum class filter_type:uint8_t{
+  none = 0,
+  sub,
+  up,
+  average,
+  paeth,
+};
+
+    
 class png{
   private:
     struct stats_t {
@@ -28,10 +37,15 @@ class png{
     int decodePalette(uint32_t length);
     int decodeImageData(uint32_t length);
     std::function<int(char*,int)> _read;
-    uint8_t *curline;
-    uint8_t *prevline;
+    std::vector<uint8_t> curline;
+    std::vector<uint8_t> prevline;
+    int scanline_mem;
+    int bpp;
+    int filterline(uint8_t *buf, int length);
     int read(auto *buf){return _read(reinterpret_cast<char*>(buf),sizeof(*buf));};
+    int read(auto *buf,auto length){return _read(reinterpret_cast<char*>(buf),length);};
   public:
     int decode(std::function<int(char*,int)> readfunc);
 };
+
 

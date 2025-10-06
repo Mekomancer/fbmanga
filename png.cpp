@@ -16,19 +16,19 @@ int png::decode(std::function<int(char*,int)> rfunc){
   dprf("    png  sig: {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}\n",png_sig[0],png_sig[1],png_sig[2],png_sig[3],png_sig[4],png_sig[5],png_sig[6],png_sig[7]);
   if(file_sig == png_sig){
     dprf("    File starts with the png file signature\n");
-  }else{
+  } else{
     dprf("ERR: Not a png file\n");
     return -1;
   };
   decodeHeader();
-uint32_t crc;
+  uint32_t crc;
   read(&crc);
   bool ended = false;
   while(!ended){
     uint32_t length;
     read(&length); bswap(&length);
     std::array<char,4> buf;
-    _read(buf.data(),4);
+    read(buf.data(),4);
     if(buf == chunk_type["PLTE"]){
       dprf("Chunk type PLTE\n");
       decodePalette(length);
@@ -37,7 +37,12 @@ uint32_t crc;
       dprf("Chunk type IDAT\n");
       decodeImageData(length);
     } else if(buf == chunk_type["IEND"]){
+      dprf("Chunk type IEND\n");
       ended = true;
+    } else {
+      dprf("Unkown chunk, with length {:}\n", length);
+      char *dummybuf = new char[length];
+      read(dummybuf, length);
     }
     uint32_t crc;
     read(&crc);
@@ -119,6 +124,26 @@ int png::decodeHeader(){
     dprf("ERR: Unknown filter method {:}\n", stats.interlace_method);
     bad_header = true;
   }
+  uint64_t byte_width = 0;//bytes per scanline
+  if( stats.color_type == color_type::greyscale ||
+      stats.color_type == color_type::greyscale_alpha || 
+      stats.color_type == color_type::palette ){
+    bpp = stats.bit_depth;
+  } else if ( static_cast<uint8_t>(stats.color_type) & 2 ) {//truecolor
+    bpp = stats.bit_depth * 3;
+  }
+  if( static_cast<uint8_t>(stats.color_type) & 4 ){//has alpha
+    bpp += stats.bit_depth;
+  }
+  int bps = bpp * stats.width+1;//filter byte
+  if(bps%8 == 0){
+    byte_width = bps/8;
+  } else {//integer divison truncs, so +1 account for needing an half used byte.
+    byte_width = 1+ bps/8;
+  }
+  curline.resize(byte_width);
+  prevline.assign(byte_width,0);
+  scanline_mem = byte_width; 
   return bad_header?-1:0;
 }
 
@@ -149,34 +174,114 @@ std::map<std::string, std::array<char,4>> chunk_type{
   //... more chunks types exist, but i'm too lazy
 };
 
+std::string zlib_return_string(int val){
+  std::string ret;
+  if(val< 0){ ret = "ERR: zlib returned error"; }
+  if(val==Z_OK){ret		="okay (Z_OK)"; } else
+  if(val==Z_STREAM_END){ret	="stream end (Z_STREAM_END)";} else 
+  if(val==Z_NEED_DICT){ret 	="needs dictionary (Z_NEED_DICT)";} else
+  if(val==Z_ERRNO){ret	 	="(Z_ERRNO), check errno ";} else
+  if(val==Z_STREAM_ERROR){ret	="(Z_STREAM), stream error";} else
+  if(val==Z_DATA_ERROR){ret	="(Z_DATA), data error";} else
+  if(val==Z_MEM_ERROR){ret	="(Z_MEM), MEM error";} else
+  if(val==Z_BUF_ERROR){ret	="(Z_BUF), BUF error";} else
+  if(val==Z_VERSION_ERROR){ret	="(Z_VERSION), VERSION error";} 
+  return ret;
+}
 int png::decodeImageData(uint32_t length){
   dprf("Decoding image data...\n");
-  auto bufin = new unsigned char[4096];
-  auto bufout = new unsigned char[4096];
+  int bytes_avail = length;
+  int inlen = getpagesize();
+  int outlen = 9*getpagesize();
+  auto bufin = new uint8_t[inlen];
+  auto bufout = new uint8_t[outlen];    
   z_stream zstream = {
     .next_in = bufin,
     .avail_in = 0,
     .next_out = bufout,
-    .avail_out = 4096,
+    .avail_out = static_cast<unsigned int>(outlen),
     .zalloc = Z_NULL,
     .zfree = Z_NULL,
     .opaque = Z_NULL,
   };
-  zstream.avail_in = read(bufin);
+  zstream.avail_in = read(bufin,std::min(bytes_avail, inlen));
+  bytes_avail -= zstream.avail_in;
   inflateInit2(&zstream,0);
   dprf("Zstream initialized\n");
-  while (inflate(&zstream, Z_SYNC_FLUSH) != Z_STREAM_END){
-    zstream.avail_in = read(bufin);
+  int cnt = 1;
+  int ret = inflate(&zstream, Z_SYNC_FLUSH);
+  while ((ret>=0)&&(ret!=Z_STREAM_END)){
+  //                           avail_out
+  // 0                          |--^--| outlen
+  // [DDDDDDDDDDDDDDDDDDDDDDDDDD       ]
+  // [ccccccccccccccccccccccDDDD       ]
+  // [DDDD
+    int consumed = filterline(bufout, outlen - zstream.avail_out);
+    int leftoverlen = outlen - zstream.avail_out - consumed;
+    memmove(bufout, zstream.next_out - leftoverlen, leftoverlen);
+    zstream.avail_out += consumed;
+    zstream.next_out = bufout + leftoverlen;
+    if(zstream.avail_in == 0){
+      //dprf("{:} of {:} done{:}\n", zstream.total_in,length,bytes_avail);
+    zstream.avail_in = read(bufin,std::min(bytes_avail, inlen));
+    bytes_avail -= zstream.avail_in;
     zstream.next_in = bufin;
-    zstream.avail_out = 4096;
-    zstream.next_out = bufout;
-  };
-
+    };
+    ret = inflate(&zstream, Z_SYNC_FLUSH);
+  }
+  filterline(bufout, outlen - zstream.avail_out);
+ // dprf("{:} of {:} done\n", zstream.total_in,length);
+  dprf("Zstream ended with return code {:}, total bytes read {:}, length {:}\n",
+      zlib_return_string(ret),zstream.total_in,length);
   inflateEnd(&zstream);
   dprf("Zstream closed\n");
+  delete[] bufin;
+  delete[] bufout;
   return 0;
 }
 
+int png::filterline(uint8_t *buf, int length){
+  int line = 0;
+  int prev_offset = (bpp<8)?1:bpp/8;
+  while( line + scanline_mem < length ){
+    switch (static_cast<filter_type>(curline[0])){
+      using enum filter_type;
+      case none:
+        break;
+      case sub:
+        for(int i = 2; i < scanline_mem; i++){//first byte is special
+	  curline[i] = buf[i+line] + curline[i-prev_offset];
+        }
+        break;
+      case up:
+        for(int i = 1; i < scanline_mem; i++){
+	  curline[i] = buf[i+line] + prevline[i];
+	}
+        break;
+      case average:
+	for(int i = 2; i < curline.size();i++){
+	  curline[i] = buf[i+line] + (static_cast<int>(curline[i-prev_offset])+
+		       static_cast<int>(prevline[i-prev_offset]))/2;
+	}
+	break;
+      case paeth:
+	curline[1] = buf[1+line] + prevline[1];
+        for(int i = 2; i < curline.size(); i++){
+	  int a = static_cast<int>(curline[i-prev_offset]);
+	  int b = static_cast<int>(prevline[i-prev_offset]);
+	  int c = static_cast<int>(prevline[i]);
+	  int p = a + b - c;
+	  curline[i] = buf[i+line] + std::min({std::abs(p-a), std::abs(p-b), std::abs(p-c)});
+	}	
+	break;
+      default:
+	break;
+    }
+    prevline = curline;
+    line += scanline_mem;
+  } 
+  return line;
+}
 
 
 
