@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.31)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
 
@@ -51,5 +51,5 @@ target_precompile_headers(fbmanga
     "debug.h"
 )
 
-target_link_libraries(fbmanga curl deflate)
+target_link_libraries(fbmanga curl z)
 

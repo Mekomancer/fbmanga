@@ -4,5 +4,6 @@ CMake*
 fbmanga
 cmake*
 !CMakeLists.txt
-.ninja*
-build.ninja
+*.ninja*
+copies/
+compile_commands.json

@@ -28,6 +28,8 @@ class png{
     int decodePalette(uint32_t length);
     int decodeImageData(uint32_t length);
     std::function<int(char*,int)> _read;
+    uint8_t *curline;
+    uint8_t *prevline;
     int read(auto *buf){return _read(reinterpret_cast<char*>(buf),sizeof(*buf));};
   public:
     int decode(std::function<int(char*,int)> readfunc);

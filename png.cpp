@@ -4,7 +4,7 @@
 extern framebuffer fb;
 static constexpr void bswap(auto *val){
   *val = std::byteswap(*val);
-};
+}
 
 int png::decode(std::function<int(char*,int)> rfunc){
   dprf("Decoding png...\n");
@@ -21,7 +21,7 @@ int png::decode(std::function<int(char*,int)> rfunc){
     return -1;
   };
   decodeHeader();
-  uint32_t crc;
+uint32_t crc;
   read(&crc);
   bool ended = false;
   while(!ended){
@@ -30,8 +30,11 @@ int png::decode(std::function<int(char*,int)> rfunc){
     std::array<char,4> buf;
     _read(buf.data(),4);
     if(buf == chunk_type["PLTE"]){
+      dprf("Chunk type PLTE\n");
       decodePalette(length);
+      dprf("PLTE end\n");
     } else if(buf == chunk_type["IDAT"]){
+      dprf("Chunk type IDAT\n");
       decodeImageData(length);
     } else if(buf == chunk_type["IEND"]){
       ended = true;
@@ -117,7 +120,7 @@ int png::decodeHeader(){
     bad_header = true;
   }
   return bad_header?-1:0;
-};
+}
 
 constexpr std::string colorTypeString(color_type val){ 
   switch (val){
@@ -145,42 +148,32 @@ std::map<std::string, std::array<char,4>> chunk_type{
   {"tRNS", {0x74,0x52,0x4E,0x52}},
   //... more chunks types exist, but i'm too lazy
 };
+
 int png::decodeImageData(uint32_t length){
-/*  dprf("Extracting image data...");
-  size_t memlen = 0;
-  for(png_chunk chunk : index){
-    if(chunk.type == chunk_type::IDAT){
-      memlen += chunk.length;
-    }
-  }
-  dprf("Compressed size: {:d} bytes",memlen);
-  char *compressed_data = reinterpret_cast<char*>(mmap(0,memlen,PROT_READ|PROT_WRITE,MAP_ANONYMOUS|MAP_SHARED,-1,0));
-  if(compressed_data == MAP_FAILED){
-    dprf("ERR: Faild to mmap memory for the compressed image data");
-    return -1;
+  dprf("Decoding image data...\n");
+  auto bufin = new unsigned char[4096];
+  auto bufout = new unsigned char[4096];
+  z_stream zstream = {
+    .next_in = bufin,
+    .avail_in = 0,
+    .next_out = bufout,
+    .avail_out = 4096,
+    .zalloc = Z_NULL,
+    .zfree = Z_NULL,
+    .opaque = Z_NULL,
   };
-  char *cur_addr = compressed_data;
-  for(png_chunk chunk : index){
-    if(chunk.type == chunk_type::IDAT){
-      memcpy(cur_addr, chunk.data, chunk.length);
-      cur_addr += chunk.length;
-    }
-  }
-  dprf("Copied image data to input buffer for decompression");
-  libdeflate_decompressor *decomp_ptr = libdeflate_alloc_decompressor();
-  uint64_t img_mem_len;
-  if(((width * bit_depth) % 8) == 0){
-    img_mem_len = height*(((width * bit_depth)/8) + 1);//byte aligned so no partial byte but add one for filter byte 
-  } else {
-    img_mem_len = height * (((width*bit_depth)/8) + 2); //compensate for partial byte being truncated due to intger division and for filter byte
-  }
-  dprf("Calculated Image size:\t{:d} bytes",img_mem_len);
-  img_addr = reinterpret_cast<char*>(mmap(0, img_mem_len, PROT_READ|PROT_WRITE,MAP_ANONYMOUS|MAP_SHARED,-1,0));
-  size_t bytesout = 0;
-  enum libdeflate_result result = libdeflate_zlib_decompress(decomp_ptr, compressed_data,memlen,img_addr,img_mem_len,&bytesout);
-  dprf("libdeflate result: {:}", to_string(result));
-  dprf("Actual Image size:\t{:d} bytes",bytesout);
-  munmap( compressed_data, memlen);*/
+  zstream.avail_in = read(bufin);
+  inflateInit2(&zstream,0);
+  dprf("Zstream initialized\n");
+  while (inflate(&zstream, Z_SYNC_FLUSH) != Z_STREAM_END){
+    zstream.avail_in = read(bufin);
+    zstream.next_in = bufin;
+    zstream.avail_out = 4096;
+    zstream.next_out = bufout;
+  };
+
+  inflateEnd(&zstream);
+  dprf("Zstream closed\n");
   return 0;
 }
 
