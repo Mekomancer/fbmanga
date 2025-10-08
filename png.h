@@ -42,6 +42,8 @@ class png{
     int scanline_mem;
     int bpp;
     int filterline(uint8_t *buf, int length);
+    std::vector<std::array<uint16_t,480>> width_fit_img;
+    int scale(uint8_t *scnline);
     int read(auto *buf){return _read(reinterpret_cast<char*>(buf),sizeof(*buf));};
     int read(auto *buf,auto length){return _read(reinterpret_cast<char*>(buf),length);};
   public:

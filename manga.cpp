@@ -1,4 +1,4 @@
-#include "mangadex.h"
+#include "manga.h"
 
 
 int mangadex_auth::setCreds(std::string name, std::string psswd, std::string id, std::string secret){

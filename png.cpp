@@ -282,6 +282,3 @@ int png::filterline(uint8_t *buf, int length){
   } 
   return line;
 }
-
-
-

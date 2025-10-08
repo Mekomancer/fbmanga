@@ -17,7 +17,8 @@ add_executable(fbmanga
   main.cpp
   png.cpp
   view.cpp
-  mangadex.cpp
+  manga.cpp
+  config.cpp
 )
 
 target_compile_options(fbmanga
@@ -36,14 +37,11 @@ target_precompile_headers(fbmanga
     <chrono>
     <array>
     <vector>
-    <sys/stat.h>
-    <libdeflate.h>
     <bit>
     <unistd.h>
     <curl/curl.h>
     <cstring>
     <print>
-    <mdspan>
     <format>
     <zlib.h>
     <map>
