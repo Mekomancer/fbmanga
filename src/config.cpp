@@ -1,6 +1,6 @@
 #include "config.h"
 
-int parseArgs(int argn, char *argv[]){
+int configuration::parseArgs(int argn, char *argv[]){
   std::vector<std::string> args;
   for(int i = 0; i <argn; i++){
     args.push_back(argv[i]);
@@ -8,15 +8,12 @@ int parseArgs(int argn, char *argv[]){
   return 0;
 };
 
-int printHelp(int lvl){
-  if(lvl < 0){
-    std::println("Unknown option try");
-  }
+int _printHelp(std::string nullarg){
   std::println("USAGE: fbmanga [OPTION]... [TITLE|FILE]...");
   return 0;
 }
 
-int printVer(){
+int _printVersion(std::string nullarg){
   std::print("FBmanga v0.1");
   return 0;
 }

@@ -6,6 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
+set(CMAKE_SOURCE_DIR ./src/)
 
 project(FBManga
   VERSION 0.0.0.0
@@ -14,11 +15,10 @@ project(FBManga
 )
 
 add_executable(fbmanga
-  main.cpp
-  png.cpp
-  view.cpp
-  manga.cpp
-  config.cpp
+  src/main.cpp
+  src/view.cpp
+  src/manga.cpp
+  src/config.cpp
 )
 
 target_compile_options(fbmanga
@@ -32,6 +32,7 @@ target_link_options(fbmanga
 target_precompile_headers(fbmanga
   PRIVATE
     <fcntl.h>
+    <numbers>
     <sys/mman.h>
     <string>
     <chrono>
@@ -46,8 +47,10 @@ target_precompile_headers(fbmanga
     <zlib.h>
     <map>
     <functional>
-    "debug.h"
+    "src/debug.h"
+    <pnged.h>
+    <sys/stat.h>
 )
 
-target_link_libraries(fbmanga curl z)
+target_link_libraries(fbmanga curl z pnged)
 

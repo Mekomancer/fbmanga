@@ -1,15 +1,38 @@
+template <typename pixel>
 class image{
   private:
-    int size;
+   pixel *addr;
+   int width;
+   int height;
+   int bpp = sizeof(pixel);
+   int size;
+  public:
+   image( int columns, int rows){
+     width = columns;
+     height = rows;
+     size = width * height * bpp;
+     addr = new pixel[size];
+   };
+   ~image(){
+     delete[] addr;
+   };
+   constexpr pixel& operator[](int row, int col){
+     return *addr[ row * width + col];
+   };
 };
 
 
+template <typename pixel>
 class framebuffer{
  private:
-  uint16_t *addr;
-  const int res = 320*480;
+   pixel *addr;
+   int width;
+   int height;
+   int size;
  public:
-  uint16_t& operator[](int x, int y);
+  constexpr pixel& operator[](int row, int col){
+    return *addr[ ( width - col - 1 ) * height + row];
+  };
   int init();
 };
 

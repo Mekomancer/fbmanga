@@ -1,0 +1,14 @@
++-------+ +-----------+ +--------+
+|cmdline| |config file| |env vars| 
++-------+ +-----------+ +--------+
+    \_________\_____________/
+	        |
+	    +----------+
+            |parameters|
+	    +----------+
+ranking (lower ones overide higher ones)
+  enviroment variables
+  config file
+  cmdline
+
+
