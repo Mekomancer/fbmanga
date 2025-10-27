@@ -1,4 +1,5 @@
 #include "config.h"
+#include "options.h"
 
 int configuration::parseArgs(int argn, char *argv[]){
   std::vector<std::string> args;

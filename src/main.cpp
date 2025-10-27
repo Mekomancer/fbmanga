@@ -3,7 +3,7 @@
 #include "view.h"
 #include "config.h"
 
-framebuffer fb;
+frame_buffer fb;
 
 int main(int argn, char* argv[]) {
   initialize();

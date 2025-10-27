@@ -1,4 +1,3 @@
-#include "options.h"
 
 class configuration{
   private:
