@@ -5,7 +5,9 @@ extern frame_buffer fb;
 int image::display(int scroll){
   for(int col = 0; col < fb.vinfo.yres; col++){
     for(int row = 0; row < fb.vinfo.xres; row++){
-      fb.setPixel(fb.vinfo.yres-1-col, row, at(row+scroll,col));
+      if(0<row+scroll&&row+scroll<height){
+	fb.setPixel(fb.vinfo.yres-1-col, row, at(row+scroll,col));
+      }
     }
   }
   return 0;

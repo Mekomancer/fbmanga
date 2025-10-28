@@ -1,10 +1,6 @@
-const time_t access_token_lifetime = 60*15; // 15 mins, as of 09/03/25
-const std::array<std::string,4> target_demographics = {"shounen","shoujo","josei","seinen"};
-const std::array<std::string,4> publication_statuses = {"ongoing","completed","hiatus","cancelled"};
-const std::array<std::string,6> reading_statuses = {"reading","on-hold","plan-to-read","dropped","re-reading","completed"};
-const std::array<std::string,4> content_ratings = {"safe","suggestive","erotica","pornographic"};
 
-class mangadex_auth {
+
+class mangadex{
  private:
   std::string username;
   std::string password;
@@ -15,21 +11,18 @@ class mangadex_auth {
   time_t access_token_expiration_date;
   CURL *curl_handle;
  public:
+  const std::string base_url = "https://api.mangadex.org";
+  const time_t access_token_lifetime = 60*15; // 15 mins, as of 09/03/25
+  const std::array<std::string,4> target_demographics = {"shounen","shoujo","josei","seinen"};
+  const std::array<std::string,4> publication_statuses = {"ongoing","completed","hiatus","cancelled"};
+  const std::array<std::string,6> reading_statuses = {"reading","on-hold","plan-to-read","dropped","re-reading","completed"};
+  const std::array<std::string,4> content_ratings = {"safe","suggestive","erotica","pornographic"};
   int setCreds(std::string username, std::string password, std::string id, std::string secret);
+  std::vector<std::string> getChapterIds(std::string manga_id);
+  std::string getMangaId(std::string title="acchi kocchi");
+  /*fight me, i dare u. i own this repo, i make the decsions.*/
+  std::vector<int> downloadChapter(std::string manga);
   int initTokens();//call setCreds before calling this func;
   std::string getAccessToken();//automatically refreshes token if expired;
-  
-  mangadex_auth();
+  int init();
 };
-
-class mangadex_manga {
- private:
-   std::string id;
-   std::string title;
- public:
-   int getMangaIdFromTitle(std::string title);
-   int downloadChapter(int chapter_index);
-};
-//returns manga id
-std::string getMangaIdFromTags(std::vector<std::string> include_tags, std::vector<std::string> exclude_tags);
-

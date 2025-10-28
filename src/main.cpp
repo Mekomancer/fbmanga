@@ -7,10 +7,15 @@ frame_buffer fb;
 
 int main(int argn, char* argv[]) {
   initialize();
-//  parseArgs(argn, argv);
-  mangadex_manga acchi_kocchi;
-  acchi_kocchi.getMangaIdFromTitle("Acchi Kocchi");
-  acchi_kocchi.downloadChapter(1);
+  configuration cfg;
+  cfg.indexArgs(argn, argv);
+  mangadex md;
+  md.init();
+  std::string manga_id = md.getMangaId();
+  std::vector<std::string> chaps = md.getChapterIds(manga_id);
+  for(int i = 0; i<1;i++){
+    md.downloadChapter(chaps[i]);
+  }
   int png_fd = open(argv[1],O_RDWR);
   struct stat stats;
   fstat(png_fd,&stats);
@@ -28,7 +33,7 @@ int main(int argn, char* argv[]) {
   double factor = 479.0/static_cast<double>(pngs[0].ihdr.width);  
   image img(static_cast<double>(pngs[0].ihdr.height)*factor);
   scale(factor, reinterpret_cast<color888*>(obuf),pngs[0].ihdr.width,pngs[0].ihdr.height,&img);
-  for(int i = 0; i + 320 < img.height; i++){
+  for(int i = 0; i < img.height; i++){
     img.display(i);
   };
   curl_global_cleanup();
@@ -39,6 +44,8 @@ int main(int argn, char* argv[]) {
 
 int initialize(){
   fb.init();
+  std::setlocale(LC_ALL, "");
+  initscr(); cbreak(); noecho();
   curl_global_init(CURL_GLOBAL_ALL);
   return 0;
 };

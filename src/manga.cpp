@@ -1,7 +1,7 @@
 #include "manga.h"
 
 
-int mangadex_auth::setCreds(std::string name, std::string psswd, std::string id, std::string secret){
+int mangadex::setCreds(std::string name, std::string psswd, std::string id, std::string secret){
   username = name;
   password = psswd;
   client_id = id;
@@ -9,20 +9,24 @@ int mangadex_auth::setCreds(std::string name, std::string psswd, std::string id,
   return 0;
 };
 
-mangadex_auth::mangadex_auth(){
-  curl_handle = curl_easy_init();
-};
+int mangadex::init(){
+  return (curl_handle = curl_easy_init())==NULL?-1:0;
+}
 
-int mangadex_manga::getMangaIdFromTitle(std::string title){
-  // url = https://api.mangadex.org"
+std::string mangadex::getMangaId(std::string title){
+  curl_easy_setopt(curl_handle, CURLOPT_URL, (base_url + "/manga").c_str());
   // params = {"title"= title}
   // response = curl get() or smth idk
   // return response.data("id") or smth idk
-  return -1;//not implemented so return error;
+  return "";
 };
 
-int mangadex_manga::downloadChapter(int chapter_index){
-  return -1;//dummy func, for now...
+std::vector<std::string> mangadex::getChapterIds(std::string manga_id){
+  return {""};
+}
+
+std::vector<int> mangadex::downloadChapter(std::string chapter_id){
+  return {-1};//dummy func, for now...
 };
   
 

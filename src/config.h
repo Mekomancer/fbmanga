@@ -1,8 +1,9 @@
-
 class configuration{
   private:
+    std::vector<std::string> args;
   public:
-    int parseArgs(int argn, char *argv[]); 
+    void indexArgs(int argn, char *argv[]); 
+    int parseArgs();
 };
 
 

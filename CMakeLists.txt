@@ -51,7 +51,9 @@ target_precompile_headers(fbmanga
     <pnged.h>
     <fb.h>
     <sys/stat.h>
+    <memory>
+    <curses.h>
 )
 target_link_directories(fbmanga PUBLIC /usr/local/lib)
-target_link_libraries(fbmanga curl z pnged fb)
+target_link_libraries(fbmanga curl z pnged fb ncurses)
 
