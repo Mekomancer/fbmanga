@@ -20,10 +20,17 @@ int main(int argn, char* argv[]) {
   pngs[0].next_in = ibuf;
   pngs[0].avail_in = stats.st_size;
   pngs[0].init();
-  auto obuf = new char[pngs[0].image_size];
+  pngs[0].parseHead();
+  auto obuf = new char[pngs[0].image_size*3];//output is 888 so *3
   pngs[0].next_out = obuf;
-  pngs[0].avail_out = pngs[0].image_size;
+  pngs[0].avail_out = pngs[0].image_size * 3;
   pngs[0].decode();
+  double factor = 479.0/static_cast<double>(pngs[0].ihdr.width);  
+  image img(static_cast<double>(pngs[0].ihdr.height)*factor);
+  scale(factor, reinterpret_cast<color888*>(obuf),pngs[0].ihdr.width,pngs[0].ihdr.height,&img);
+  for(int i = 0; i + 320 < img.height; i++){
+    img.display(i);
+  };
   curl_global_cleanup();
   delete[] ibuf;
   delete[] obuf;

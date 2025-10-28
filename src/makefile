@@ -9,3 +9,6 @@ build:
 
 clean:
 	ninja -C .. clean
+
+debug: build
+	gdbtui --args ../fbmanga ../dat/png/x1*
