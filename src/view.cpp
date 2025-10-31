@@ -13,13 +13,13 @@ int image::display(int scroll){
   return 0;
 }
 
-int image::scale(double fctr, std::span<color888> kernel, int w, int h){
+int scale(double fctr, color888 *kernel, int w, int h, image *img){
   double scl = 1/fctr - 0.1;
-  for(int r = 0;  r < height; r++){
-    for(int c = 0; c < width; c++){
+  for(int r = 0;  r < img->height; r++){
+    for(int c = 0; c < img->width; c++){
       long int i = static_cast<int>(c * scl) + w * static_cast<int>(r*scl);
-      at(r,c) = kernel[i];
-    }	
+      img->at(r,c) = kernel[i];
+    }
   }
   return 0;
 }

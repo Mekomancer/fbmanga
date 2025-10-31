@@ -19,47 +19,33 @@ int main(int argn, char* argv[]) {
   int png_fd = open(argv[1],O_RDWR);
   struct stat stats;
   fstat(png_fd,&stats);
-  std::vector<char> ibuf;
-  ibuf.resize(stats.st_size);
-  read(png_fd,ibuf.data(),stats.st_size);
+  auto ibuf = new char[stats.st_size];
+  read(png_fd,ibuf,stats.st_size);
   png pngs[1];
-  int i = 0;
-  pngs[i].next_in = ibuf.data();
-  pngs[i].avail_in = ibuf.size();
-  pngs[i].init();
-  pngs[i].parseHead();
-  std::vector<color888> obuf;
-  obuf.resize(pngs[i].ihdr.width*pngs[i].ihdr.height);
-  pngs[i].next_out = reinterpret_cast<char*>(obuf.data());
-  pngs[i].avail_out = obuf.size()*3;
-  pngs[i].decode();
-  double factor = 479.0/static_cast<double>(pngs[i].ihdr.width);  
-  image img(static_cast<double>(pngs[i].ihdr.height)*factor);
-  img.scale(factor, obuf, pngs[i].ihdr.width, pngs[i].ihdr.height);
+  pngs[0].next_in = ibuf;
+  pngs[0].avail_in = stats.st_size;
+  pngs[0].init();
+  pngs[0].parseHead();
+  auto obuf = new char[pngs[0].image_size*3];//output is 888 so *3
+  pngs[0].next_out = obuf;
+  pngs[0].avail_out = pngs[0].image_size * 3;
+  pngs[0].decode();
+  double factor = 479.0/static_cast<double>(pngs[0].ihdr.width);  
+  image img(static_cast<double>(pngs[0].ihdr.height)*factor);
+  scale(factor, reinterpret_cast<color888*>(obuf),pngs[0].ihdr.width,pngs[0].ihdr.height,&img);
   for(int i = 0; i < img.height; i++){
     img.display(i);
-    switch(wgetch(stdscr)){
-      case KEY_UP:
-	i -= 40;
-	break;
-      case KEY_DOWN:
-	i += 40;
-	break;
-    }
   };
   curl_global_cleanup();
-  endwin();
+  delete[] ibuf;
+  delete[] obuf;
   return 0;
 }
 
 int initialize(){
   fb.init();
   std::setlocale(LC_ALL, "");
-  savetty();
-  initscr(); cbreak(); noecho(); nodelay(stdscr,true); curs_set(0);
-  keypad(stdscr,true);
-  //for some reason, the settings don't apply until a read is called
-  wgetch(stdscr);
+  initscr(); cbreak(); noecho();
   curl_global_init(CURL_GLOBAL_ALL);
   return 0;
 };
