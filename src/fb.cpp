@@ -12,6 +12,13 @@ int frame_buffer::free(){
   return munmap(addr, finfo.smem_len);
 }
 
+
+/* Ripped from libpnged (pnged.h), tl;dr accurate bitscale without floats */
+template<std::unsigned_integral uint_t>
+[[nodiscard]] constexpr uint_t bitscale(uint_t val, int cur, int target) noexcept{
+  return (((val<<target+1)-2*val)/((1<<cur) - 1) + 1 )/2;
+}
+
 void frame_buffer::setPixel(int row, int col, rgb888 color) noexcept{
   static_cast<uint16_t*>(addr)[row * 320+ col] = 
     (bitscale<uint16_t>(color.red,8,vinfo.red.length)<<vinfo.red.offset)|
@@ -19,7 +26,7 @@ void frame_buffer::setPixel(int row, int col, rgb888 color) noexcept{
     (bitscale<uint16_t>(color.blue,8,vinfo.blue.length)<<vinfo.blue.offset);
 };
 
-rgb888 frame_buffer::getPixel(int row, int col){
+frame_buffer::rgb888 frame_buffer::getPixel(int row, int col){
   uint16_t val = static_cast<uint16_t*>(addr)[row * 320+ col];
   return {bitscale<uint8_t>(val>>vinfo.red.offset & ((1<<(vinfo.red.length))-1),vinfo.red.length,8),
 	  bitscale<uint8_t>(val>>vinfo.green.offset& ((1<<(vinfo.green.length))-1),vinfo.green.length,8),

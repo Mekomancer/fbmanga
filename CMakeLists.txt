@@ -7,7 +7,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
 set(CMAKE_SOURCE_DIR ./src/)
-set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53'")
 
 project(FBManga
   VERSION 0.0.0.0
@@ -20,11 +19,16 @@ add_executable(fbmanga
   src/view.cpp
   src/manga.cpp
   src/config.cpp
-  src/png.cpp
-  src/util.cpp
-  src/fb.cpp
 )
 
+target_compile_options(fbmanga
+  PUBLIC
+    "--stdlib=libc++"
+)
+target_link_options(fbmanga
+  PUBLIC
+    "--stdlib=libc++"
+)
 target_precompile_headers(fbmanga
   PRIVATE
     <fcntl.h>
@@ -50,9 +54,6 @@ target_precompile_headers(fbmanga
     <span>
     <cstdint>
     <linux/fb.h>
-    <arm_acle.h>
-    <sys/ioctl.h>
 )
-
 target_link_libraries(fbmanga curl z ncurses)
 

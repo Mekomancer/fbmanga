@@ -13,7 +13,7 @@ int image::display(int scroll){
   return 0;
 }
 
-int image::scale(double fctr, std::span<rgb888> kernel, int w, int h){
+int image::scale(double fctr, std::span<color888> kernel, int w, int h){
   double scl = 1/fctr - 0.1;
   for(int r = 0;  r < height; r++){
     for(int c = 0; c < width; c++){
