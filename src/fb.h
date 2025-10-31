@@ -1,14 +1,10 @@
+#include "util.h"
 
 class frame_buffer {
   private:
     void *addr;
     int fd;
   public:
-    struct rgb888{
-      uint8_t red;
-      uint8_t green;
-      uint8_t blue;
-    };
     bool constexpr inBounds(int row, int col){
       return (0<=row&&row<vinfo.yres&&0<=col&&col<vinfo.xres);
     }

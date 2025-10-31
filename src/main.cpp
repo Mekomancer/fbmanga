@@ -2,6 +2,7 @@
 #include "manga.h"
 #include "view.h"
 #include "config.h"
+#include "png.h"
 
 frame_buffer fb;
 
@@ -19,16 +20,15 @@ int main(int argn, char* argv[]) {
   int png_fd = open(argv[1],O_RDWR);
   struct stat stats;
   fstat(png_fd,&stats);
-  std::vector<char> ibuf;
+  ring_buf<std::byte> ibuf;
   ibuf.resize(stats.st_size);
   read(png_fd,ibuf.data(),stats.st_size);
   png pngs[1];
   int i = 0;
-  pngs[i].next_in = ibuf.data();
-  pngs[i].avail_in = ibuf.size();
+  pngs[i].in = ibuf;
   pngs[i].init();
   pngs[i].parseHead();
-  std::vector<color888> obuf;
+  std::vector<rgb888> obuf;
   obuf.resize(pngs[i].ihdr.width*pngs[i].ihdr.height);
   pngs[i].next_out = reinterpret_cast<char*>(obuf.data());
   pngs[i].avail_out = obuf.size()*3;
