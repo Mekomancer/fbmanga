@@ -1,37 +1,4 @@
-#ifndef NDEBUG
-#define dprf(...) std::print(__VA_ARGS__); fflush(0);
-#else
-#define dprf(...) 
-#endif
-struct rgb888{
-  uint8_t r,g,b;
-};
-
-template<std::unsigned_integral uint_t>
-constexpr uint_t bitscale(uint_t val, int cur, int target){
-  return (((2 * val *((1<<target)-1))/((1<<cur)-1)) +1 )/2;
-};
-
-template<std::unsigned_integral uint_t>
-constexpr uint_t bitscaletrue(uint_t val, int cur, int target){
-  return static_cast<uint_t>(
-	(
-	  static_cast<double>(val) * static_cast<double>(
-	    (1<<target)-1
-	  ) / static_cast<double>(
-	    (1<<cur) -1
-	  )
-	) + 0.5
-      );/* implicit conversion truncs, which is okay because the value
-	 * will be non-negitive, so trunc(x) == floor(x). png spec states
-	 * the most accurate method for sample depth scaling is the linear
-	 * equation `floor((val* maxtargetsamp / maxcursamp)+0.5)` where
-	 * maxtargetsamp = 2^target - 1 and maxcursamp = 2^cur - 1 
-	 * the reason for not using std::floor is that in llvm-19 
-	 * it is not constexpr, which is useful to see if my function that
-	 * skips the conversion to doubles is accurate
-	 */
-}
+#include "util.h"
 
 class png{
   private:
@@ -54,7 +21,8 @@ class png{
     int splt(int len);
     int exif(int len);
     int time(int len);
-    int trns(int length);
+    int trns(int len);
+    void notImplYet(int len);
     std::map<std::string, std::array<char,4>> chunk_type{
       {"IHDR", {0x49,0x48,0x44,0x52}},
       {"PLTE", {0x50,0x4C,0x54,0x45}},
@@ -83,8 +51,6 @@ class png{
     static constexpr std::array<uint8_t,8> signature{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
     std::vector<rgb888> palette;
     bool validate_ihdr() noexcept;
-    template<typename byte>
-    int getData(byte *buffer, size_t num_bytes = 1);
     uint32_t checksum;
     template<typename byte>
     void crc32(char *data, int len);
@@ -111,8 +77,7 @@ class png{
       uint8_t interlace_method;
     } ihdr;
     uint64_t image_size;
-    char *next_in;
-    size_t avail_in;
+    ring_buf<std::byte> in;
     char *next_out;
     size_t avail_out;
     int init();
