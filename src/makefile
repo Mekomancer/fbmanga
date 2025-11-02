@@ -2,7 +2,7 @@
 .PHONY: run build clean
 	
 run: build
-	../fbmanga `ls ../dat/png/x* -w 0`
+	../fbmanga ../dat/png/x1*
 
 build:
 	ninja -C ..
@@ -11,4 +11,4 @@ clean:
 	ninja -C .. clean
 
 debug: build
-	gdbtui --args ../fbmanga `ls ../dat/png/x* -w 0`
+	gdbtui --args ../fbmanga ../dat/png/x1*
