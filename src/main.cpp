@@ -17,8 +17,14 @@ void init() {
   return;
 };
 
-std::string makefname(std::string_view mangaid, std::string_view chapterid,
-                      int image) {
+void cleanup(){
+#ifdef NDEBUG
+    tui.cleanup()
+#endif
+}
+
+std::string
+    makefname(std::string_view mangaid, std::string_view chapterid, int image) {
   return format("{}.{}.{}.png", mangaid, chapterid, image);
 }
 
@@ -69,6 +75,5 @@ int main(int argn, char *argv[]) {
 #endif
   };
   curl_global_cleanup();
-  endwin();
   return 0;
 }
