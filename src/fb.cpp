@@ -1,7 +1,7 @@
 #include "fb.h"
 
-int frame_buffer::init(std::string fb_device) {
-  fd = open(fb_device.c_str(), O_RDWR);
+int frame_buffer::init(std::string_view fb_device) {
+  fd = open(fb_device.data(), O_RDWR);
   ioctl(fd, FBIOGET_FSCREENINFO, &finfo);
   ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
   addr = mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);

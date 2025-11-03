@@ -1,4 +1,4 @@
-#Made for nvim, so i can run ":make" and build my project
+#Made for (n)vim, so i can run ":make" and build my project
 .PHONY : run build clean grind debug tidy
 
 runcmd = ../fbmanga ../dat/png/*

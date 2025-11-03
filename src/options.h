@@ -2,13 +2,13 @@
 struct option {
   char opt;
   std::string long_opt;
-  std::function<int(std::string)> func;
+  std::function<int(std::string_view)> func;
   std::string desc;
   std::string long_desc;
 };
 
-int printHelp(std::string nullarg = "");
-int printVersion(std::string nullarg = "");
+int printHelp(std::string_view nullarg = "");
+int printVersion(std::string_view nullarg = "");
 std::array<option, 2> opts({
     option{
         'h',

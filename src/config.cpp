@@ -14,12 +14,12 @@ int configuration::parseArgs() {
   return 0;
 }
 
-int printHelp(std::string nullarg) {
+int printHelp(std::string_view nullarg) {
   std::println("USAGE: fbmanga [OPTION]... [TITLE|FILE]...");
   return 0;
 }
 
-int printVersion(std::string nullarg) {
+int printVersion(std::string_view nullarg) {
   std::print("FBmanga v0.1");
   return 0;
 }

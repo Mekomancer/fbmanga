@@ -1,27 +1,24 @@
 #include "config.h"
 #include "manga.h"
 #include "png.h"
+#include "ui.h"
 #include "view.h"
 
 frame_buffer fb;
 configuration conf;
+text_user_interface tui;
 
 void init() {
   std::setlocale(LC_ALL, "");
 #ifdef NDEBUG
-  initscr();
-  cbreak();
-  noecho();
-  nodelay(stdscr, true);
-  curs_set(0);
-  keypad(stdscr, true);
-  refresh();
+  tui.init()
 #endif
-  curl_global_init(CURL_GLOBAL_ALL);
+      curl_global_init(CURL_GLOBAL_ALL);
   return;
 };
 
-std::string makefname(std::string mangaid, std::string chapterid, int image) {
+std::string makefname(std::string_view mangaid, std::string_view chapterid,
+                      int image) {
   return format("{}.{}.{}.png", mangaid, chapterid, image);
 }
 
@@ -34,8 +31,7 @@ int main(int argn, char *argv[]) {
   int i = 0;
   std::vector<std::string> manga_ids = md.getMangaId("Acchi Kocchi");
   std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[0]);
-  std::vector<std::string> img_urls = {
-      "", "", ""}; // md.getImgUrls(chap_ids[cur_chap]);
+  std::vector<std::string> img_urls = md.getImgUrls(chap_ids[cur_chap]);
   std::vector<png> pngs(img_urls.size());
   std::vector<image> imgs(img_urls.size());
   int png_fd = open(argv[1], O_RDWR);

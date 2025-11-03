@@ -21,13 +21,13 @@ public:
       "dropped", "re-reading", "completed"};
   const std::array<std::string, 4> content_ratings = {
       "safe", "suggestive", "erotica", "pornographic"};
-  int setCreds(std::string username, std::string password, std::string id,
-               std::string secret);
-  std::vector<std::string> getChapterIds(std::string manga_id);
-  std::vector<std::string> getMangaId(std::string title = "acchi kocchi");
+  int setCreds(std::string_view username, std::string_view password,
+               std::string_view id, std::string_view secret);
+  std::vector<std::string> getChapterIds(std::string_view manga_id);
+  std::vector<std::string> getMangaId(std::string_view title = "acchi kocchi");
   /*fight me, i dare u. i own this repo, i make the decsions.*/
-  std::vector<int> downloadChapter(std::string manga);
-  std::vector<std::string> getImgUrls(std::string chapter);
+  std::vector<int> downloadChapter(std::string_view manga);
+  std::vector<std::string> getImgUrls(std::string_view chapter);
   int initTokens();             // call setCreds before calling this func;
   std::string getAccessToken(); // automatically refreshes token if expired;
   int init();
