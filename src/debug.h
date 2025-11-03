@@ -1,5 +1,7 @@
 #ifdef NDEBUG
-#define dprf(...) 
+#define dprf(...)
 #else
-#define dprf(...) std::print(__VA_ARGS__); fflush(0);
+#define dprf(...)                                                              \
+  std::print(__VA_ARGS__);                                                     \
+  fflush(0);
 #endif
