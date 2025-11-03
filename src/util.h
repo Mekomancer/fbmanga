@@ -83,6 +83,7 @@ class ring_buf{
     template<typename ret_t=T>
     ret_t pop();
     size_t mmove(std::span<std::byte> dest);
+    size_t mcopy(std::span<std::byte> dest);
     T *data(); 
     void append(std::byte val);
     size_t size();

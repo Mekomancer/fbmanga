@@ -1,3 +1,4 @@
+
 class configuration{
   private:
     std::vector<std::string> args;

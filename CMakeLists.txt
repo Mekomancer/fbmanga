@@ -8,6 +8,7 @@ set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
 set(CMAKE_SOURCE_DIR ./src/)
 set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53'")
+#needed for __crc32b() builtin------------------/
 
 project(FBManga
   VERSION 0.0.0.0
@@ -38,8 +39,8 @@ target_precompile_headers(fbmanga
     <unistd.h>
     <curl/curl.h>
     <cstring>
-    <print>
     <format>
+    <print>
     <zlib.h>
     <map>
     <functional>

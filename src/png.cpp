@@ -1,5 +1,5 @@
-
 #include "png.h"
+
 uint32_t crc32(std::span<std::byte> dat){
   uint32_t ret;
   for(int i = 0; i < dat.size(); i++){
@@ -47,10 +47,14 @@ int png::parseHead(){
     tainted = true;
     return -1;
   }
-  ihdr.width = ptoh(in.pop<uint32_t>()); dprf("Width: {:d}, ", ihdr.width);
-  ihdr.height = ptoh(in.pop<uint32_t>()); dprf("Height: {:d}, ", ihdr.height);
-  ihdr.bit_depth =in.pop<uint8_t>(); dprf("Bit depth: {:d}, ", ihdr.bit_depth);
-  ihdr.color_type=in.pop<uint8_t>(); dprf("Color type: {:d}\n", ihdr.color_type);
+  ihdr.width = ptoh(in.pop<uint32_t>()); 
+  dprf("Width: {:d}, ", ihdr.width);
+  ihdr.height = ptoh(in.pop<uint32_t>()); 
+  dprf("Height: {:d}, ", ihdr.height);
+  ihdr.bit_depth =in.pop<uint8_t>(); 
+  dprf("Bit depth: {:d}, ", ihdr.bit_depth);
+  ihdr.color_type=in.pop<uint8_t>(); 
+  dprf("Color type: {:d}\n", ihdr.color_type);
   if(!validDepthColor()){
     dprf("WARN: invalid color-type and bit-depth combonation");
     tainted = true;
@@ -101,7 +105,6 @@ int png::parseHead(){
   return 0;
 }
 
-
 bool png::checkCRC(){
   uint32_t calculated = (~0)^checksum;
   uint32_t crc = in.pop<uint32_t>();
@@ -109,8 +112,8 @@ bool png::checkCRC(){
   if( calculated==crc ){
     return true;
   } else {
-    dprf("CRC check failed ToT\ncalculted\t{:}\nexpected\t{:}\n",
-	calculated, crc);
+//    dprf("CRC check failed ToT\ncalculted\t{:}\nexpected\t{:}\n",
+//	calculated, crc);
     return false;
   }
   return false;
@@ -155,9 +158,7 @@ int png::decode(){
     } else if(buf == chunk_type["tIME"]){ time(length);
     } else {
       dprf("WARN: unkown chunk (type: {:}{:}{:}{:}, length {:})\n",buf[0],buf[1],buf[2],buf[3], length);
-      std::vector<std::byte> dummybuf;
-      dummybuf.resize(length);
-      in.mmove(dummybuf);
+      notImplYet(length);
     }
     checkCRC();
   };
@@ -181,13 +182,12 @@ int png::decodeImageData(uint32_t length){
   size_t bytes_avail = length;
   size_t inlen = 2*getpagesize();
   size_t outlen = 2*getpagesize();
-  std::vector<std::byte> bufin;
-  bufin.resize(inlen);
-  auto bufout = new uint8_t[outlen];    
+  std::vector<std::byte> bufin(inlen);
+  std::vector<std::byte> bufout(outlen);
   z_stream zstream = {
     .next_in = reinterpret_cast<uint8_t*>(bufin.data()),
     .avail_in = 0,
-    .next_out = bufout,
+    .next_out = reinterpret_cast<uint8_t*>(bufout.data()),
     .avail_out = static_cast<unsigned int>(outlen),
     .zalloc = Z_NULL,
     .zfree = Z_NULL,
@@ -204,11 +204,11 @@ int png::decodeImageData(uint32_t length){
   // [DDDDDDDDDDDDDDDDDDDDDDDDDD       ]
   // [ccccccccccccccccccccccDDDD       ]
   // [DDDD
-    int consumed = filterline(bufout, outlen - zstream.avail_out);
+    int consumed = filterline(reinterpret_cast<uint8_t*>(bufout.data()), outlen - zstream.avail_out);
     int leftoverlen = outlen - zstream.avail_out - consumed;
-    memmove(bufout, zstream.next_out - leftoverlen, leftoverlen);
+    memmove(bufout.data(), zstream.next_out - leftoverlen, leftoverlen);
     zstream.avail_out += consumed;
-    zstream.next_out = bufout + leftoverlen;
+    zstream.next_out = reinterpret_cast<uint8_t*>(bufout.data()) + leftoverlen;
     if(zstream.avail_in == 0){
  //   dprf("{:} of {:} done{:}\n", zstream.total_in,length,bytes_avail);
   zstream.avail_in = in.mmove(std::span<std::byte>(bufin).subspan(0,std::min(in.size(),bytes_avail)));
@@ -217,12 +217,11 @@ int png::decodeImageData(uint32_t length){
     };
     ret = inflate(&zstream, Z_SYNC_FLUSH);
   }
-  filterline(bufout, outlen - zstream.avail_out);
+  filterline(reinterpret_cast<uint8_t*>(bufout.data()), outlen - zstream.avail_out);
  // dprf("{:} of {:} done\n", zstream.total_in,length);
 //  dprf("Zstream ended with return code {:}, total bytes read {:}, length {:}\n",
  //     zlib_return_string(ret),zstream.total_in,length);
   inflateEnd(&zstream);
-  delete[] bufout;
   return 0;
 }
 // c b 
@@ -298,8 +297,7 @@ int png::putData(byte *buf, size_t num_bytes){
   if (num_bytes > avail_out){
     return -1;
   }
-  char *buffer = reinterpret_cast<char *>(buf);
-  memcpy(next_out, buffer, num_bytes);
+  memcpy(next_out, reinterpret_cast<char *>(buf), num_bytes);
   next_out += num_bytes;
   avail_out -= num_bytes;
   return num_bytes;  

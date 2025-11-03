@@ -7,15 +7,11 @@ class image{
    int bpp = 24;
    int size;
   public:
-   image(int rows, int columns=480){
-     width = columns;
-     height = rows;
-     size = width * height;
-     data.resize(size);
-   };
+   void resize(size_t count){
+     data.resize(count);
+   }
    int width;
    int height;
-   image(image&) = delete;
    constexpr rgb888& at(int row, int col){
      return data[ row * width + col];
    };

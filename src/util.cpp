@@ -13,8 +13,15 @@ ring_buf<T>::page_t::~page_t(){
 }
 template<typename T>
 size_t ring_buf<T>::mmove(std::span<std::byte> dest){
+  mcopy(dest);  
+  start = addrAt(dest.size_bytes());
+  len -= dest.size_bytes();
+  return dest.size_bytes();
+}
+template<typename T>
+size_t ring_buf<T>::mcopy(std::span<std::byte> dest){
   if(dest.size_bytes()+start.offset < chunks[start.chunk].size){
-    memcpy(dest.data(),&chunks[start.chunk].addr[start.offset],dest.size_bytes());
+    memmove(dest.data(),&chunks[start.chunk].addr[start.offset],dest.size_bytes());
   } else {
     std::vector<std::byte> valarray;
     valarray.resize(dest.size_bytes());
@@ -22,19 +29,16 @@ size_t ring_buf<T>::mmove(std::span<std::byte> dest){
       address_t loc = addrAt(i);
       valarray[i] = chunks[loc.chunk].addr[loc.offset];
     }
-    memcpy(dest.data(),valarray.data(),dest.size_bytes());
+    memmove(dest.data(),valarray.data(),dest.size_bytes());
   }
   
-  start = addrAt(dest.size_bytes());
-  len -= dest.size_bytes();
   return dest.size_bytes();
 }
 
 
 template<typename T>
 void ring_buf<T>::resize(size_t count){
-  chunks.resize((sizeof(T)*count)/(getpagesize()));
-  len = count;
+  chunks.resize((sizeof(T)*count)/(getpagesize())+1);
 }
 
 template<typename T>
@@ -57,14 +61,12 @@ ring_buf<T>::address_t ring_buf<T>::addrAt(size_t index){
   size_t chunk_num = start.chunk;
   size_t off_bytes = start.offset;
   off_bytes += index;
-  chunk_num += off_bytes / getpagesize();
+  chunk_num = off_bytes / getpagesize();
   off_bytes %= getpagesize();
   return {chunk_num,off_bytes};
 
 }
 
-template class ring_buf<std::byte>;
-template class ring_buf<rgb888>;
 
 template<typename T>
 void ring_buf<T>::append(std::byte val){
@@ -113,3 +115,5 @@ constexpr std::string zlib_return_string(int val){
 }
 
 
+template class ring_buf<std::byte>;
+template class ring_buf<rgb888>;

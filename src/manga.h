@@ -1,5 +1,3 @@
-
-
 class mangadex{
  private:
   std::string username;
@@ -19,10 +17,13 @@ class mangadex{
   const std::array<std::string,4> content_ratings = {"safe","suggestive","erotica","pornographic"};
   int setCreds(std::string username, std::string password, std::string id, std::string secret);
   std::vector<std::string> getChapterIds(std::string manga_id);
-  std::string getMangaId(std::string title="acchi kocchi");
+  std::vector<std::string> getMangaId(std::string title="acchi kocchi");
   /*fight me, i dare u. i own this repo, i make the decsions.*/
   std::vector<int> downloadChapter(std::string manga);
+  std::vector<std::string> getImgUrls(std::string chapter);
   int initTokens();//call setCreds before calling this func;
   std::string getAccessToken();//automatically refreshes token if expired;
   int init();
 };
+
+
