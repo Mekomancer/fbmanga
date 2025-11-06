@@ -2,7 +2,6 @@
 #include "manga.h"
 #include "png.h"
 #include "ui.h"
-#include "view.h"
 
 frame_buffer fb;
 configuration conf;
@@ -38,31 +37,16 @@ int main(int argn, char *argv[]) {
   std::vector<std::string> manga_ids = md.getMangaId("Acchi Kocchi");
   std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[0]);
   std::vector<std::string> img_urls = md.getImgUrls(chap_ids[cur_chap]);
-  std::vector<png> pngs(img_urls.size());
-  std::vector<image> imgs(img_urls.size());
-  int png_fd = open(argv[1], O_RDWR);
-  struct stat stats;
-  fstat(png_fd, &stats);
-  pngs[i].in.resize(stats.st_size);
-  std::vector<std::byte> buf(stats.st_size);
-  read(png_fd, buf.data(), stats.st_size);
-  for (std::byte data : buf) {
-    pngs[i].in.append(data);
-  }
-  pngs[i].in.pop();
+  /* std::vector<png> pngs(img_urls.size());
+
   pngs[i].init();
   pngs[i].parseHead();
   std::vector<rgb888> obuf;
   obuf.resize(pngs[i].ihdr.width * pngs[i].ihdr.height);
-  pngs[i].next_out = reinterpret_cast<char *>(obuf.data());
-  pngs[i].avail_out = obuf.size() * 3;
   pngs[i].decode();
   double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
-  imgs[i].resize(static_cast<size_t>(pngs[i].ihdr.height * factor *
-                                     pngs[i].ihdr.width * factor));
-  imgs[i].scale(factor, obuf, pngs[i].ihdr.width, pngs[i].ihdr.height);
-  for (int line = 0; line < imgs[i].height; line++) {
-    imgs[i].display(line);
+  for (int line = 0; line < pngs[i].image.height; line++) {
+    pngs[i].image.display(line);
 #ifdef NDEBUG
     switch (getch()) {
     case KEY_UP:
@@ -73,7 +57,7 @@ int main(int argn, char *argv[]) {
       break;
     }
 #endif
-  };
+  };*/
   curl_global_cleanup();
   return 0;
 }

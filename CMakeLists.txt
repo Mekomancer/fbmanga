@@ -8,7 +8,7 @@ set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
 set(CMAKE_SOURCE_DIR ./src/)
 set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53'")
-#needed for __crc32b() builtin------------------/
+#needed for __crc32b() builtin-------^^^^^^^^^^^^^^^^^^
 
 project(FBManga
   VERSION 0.0.0.0
@@ -18,7 +18,6 @@ project(FBManga
 
 add_executable(fbmanga
   src/main.cpp
-  src/view.cpp
   src/manga.cpp
   src/config.cpp
   src/png.cpp

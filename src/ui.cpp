@@ -1,5 +1,7 @@
 #include "ui.h"
 
+template <typename cat, int ct> void foo() { return (cat)ct; }
+
 void text_user_interface::init() {
   if (initialized) {
     dprf("WARN: tui already initialized");

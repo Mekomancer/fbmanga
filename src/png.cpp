@@ -1,10 +1,15 @@
 #include "png.h"
-
-uint32_t crc32(std::span<std::byte> dat) {
+template <bytesized t = std::byte> uint32_t crc32(std::span<t> dat) {
   uint32_t ret;
+#if __ARM_FEATURE_CRC32 == 1
+  // use intrisics
   for (int i = 0; i < dat.size(); i++) {
     ret = __crc32b(ret, static_cast<char>(dat[i]));
   }
+#else
+  // use zlibs crc
+  crc32_z(uint32_t ret, dat.data(), dat.length());
+#endif
   return ret;
 }
 
@@ -23,12 +28,10 @@ bool png::validDepthColor() {
   };
   return true;
 };
-
+/*
 int png::parseHead() {
-  std::array<uint8_t, 8> file_sig;
-  for (int i = 0; i < file_sig.size(); i++) {
-    file_sig[i] = in.pop<uint8_t>();
-  }
+  std::array<uint8_t, signature.size()> file_sig;
+  in.pop(std::span<uint8_t>(file_sig));
   if (file_sig != signature) {
     dprf("ERR: Bad file sig");
     dprf("    file sig: {:} {:} {:} {:} {:} {:} {:} {:}\n", file_sig[0],
@@ -39,16 +42,16 @@ int png::parseHead() {
          signature[6], signature[7]);
     tainted = true;
   }
-  uint32_t len = in.pop<uint32_t>();
+  uint32_t len;
+  in.sgetn(reinterpret_cast<char *>(&len), sizeof(len));
   len = ptoh(len);
   if (len != 13) {
     dprf("ERR: Bad IHDR (first chunk's length should be 13, is {:})\n", len);
   };
   checksum = ~0;
   std::array<char, 4> buf;
-  for (int i = 0; i < buf.size(); i++) {
-    buf[i] = in.pop<char>();
-  }
+  in.sgetn(buf.data(), buf.size());
+
   bool bad_header = false;
   if (buf != chunk_type["IHDR"]) {
     dprf("ERR: First chunk is not IHDR, (got {:?}{:?}{:?}{:?})\n", buf[0],
@@ -56,33 +59,33 @@ int png::parseHead() {
     tainted = true;
     return -1;
   }
-  ihdr.width = ptoh(in.pop<uint32_t>());
+  ihdr.width = ptoh(in.sbumpc());
   dprf("Width: {:d}, ", ihdr.width);
-  ihdr.height = ptoh(in.pop<uint32_t>());
+  ihdr.height = ptoh(in.sbumpc());
   dprf("Height: {:d}, ", ihdr.height);
-  ihdr.bit_depth = in.pop<uint8_t>();
+  ihdr.bit_depth = in.sbumpc();
   dprf("Bit depth: {:d}, ", ihdr.bit_depth);
-  ihdr.color_type = in.pop<uint8_t>();
+  ihdr.color_type = in.sbumpc();
   dprf("Color type: {:d}\n", ihdr.color_type);
   if (!validDepthColor()) {
     dprf("WARN: invalid color-type and bit-depth combonation");
     tainted = true;
   }
-  ihdr.compression_method = in.pop<uint8_t>();
+  ihdr.compression_method = in.sbumpc();
   if (ihdr.compression_method == 0) {
     dprf("Compression method: 0: DEFLATE\n");
   } else {
     dprf("ERR: Unknown compression method {:}\n", ihdr.compression_method);
     tainted = true;
   }
-  ihdr.filter_method = in.pop<uint8_t>();
+  ihdr.filter_method = in.sbumpc();
   if (ihdr.filter_method == 0) {
     dprf("Filter method: 0: Adaptive filtering with five basic filter types\n");
   } else {
     dprf("ERR: Unknown filter method {:}\n", ihdr.filter_method);
     tainted = true;
   }
-  ihdr.interlace_method = in.pop<uint8_t>();
+  ihdr.interlace_method = in.sbumpc();
   if (ihdr.interlace_method == 0) {
     dprf("Interlace method: 0: No interlace\n");
   } else if (ihdr.interlace_method == 1) {
@@ -116,7 +119,8 @@ int png::parseHead() {
 
 bool png::checkCRC() {
   uint32_t calculated = (~0) ^ checksum;
-  uint32_t crc = in.pop<uint32_t>();
+  uint32_t crc;
+  in.sgetn(reinterpret_cast<char *>(&crc), sizeof(crc));
   crc = ptoh(crc);
   if (calculated == crc) {
     return true;
@@ -134,16 +138,16 @@ int png::init() {
   return 0;
 }
 
+
 int png::decode() {
   dprf("Decoding PNG\n");
-  while ((in.size() > 0)) {
-    uint32_t length = in.pop<uint32_t>();
+  while (in.in_avail() > 0) {
+    uint32_t length;
+    in.sgetn(reinterpret_cast<char *>(&length), sizeof(length));
     length = ptoh(length);
     checksum = ~0;
     std::array<char, 4> buf;
-    for (int i = 0; i < buf.size(); i++) {
-      buf[i] = in.pop<char>();
-    }
+    in.sgetn(buf.data(), buf.size());
     if (buf == chunk_type["PLTE"]) {
       parsePalette(length);
     } else if (buf == chunk_type["IDAT"]) {
@@ -205,11 +209,10 @@ int png::parsePalette(uint32_t length) {
   }
   palette.resize(length / 3);
   for (int i = 0; (i * 3) < length; i++) {
-    palette[i] = in.pop<rgb888>();
+    in.sgetn(reinterpret_cast<char *>(&palette[i]), sizeof(palette[i]));
   };
   return 0;
 };
-
 int png::decodeImageData(uint32_t length) {
   size_t bytes_avail = length;
   size_t inlen = 2 * getpagesize();
@@ -225,8 +228,7 @@ int png::decodeImageData(uint32_t length) {
       .zfree = Z_NULL,
       .opaque = Z_NULL,
   };
-  zstream.avail_in = in.mmove(
-      std::span<std::byte>(bufin).subspan(0, std::min(in.size(), bytes_avail)));
+  zstream.avail_in = bufin.size();
   bytes_avail -= zstream.avail_in;
   inflateInit2(&zstream, 0);
   int cnt = 1;
@@ -245,8 +247,8 @@ int png::decodeImageData(uint32_t length) {
     zstream.next_out = reinterpret_cast<uint8_t *>(bufout.data()) + leftoverlen;
     if (zstream.avail_in == 0) {
       //   dprf("{:} of {:} done{:}\n", zstream.total_in,length,bytes_avail);
-      zstream.avail_in = in.mmove(std::span<std::byte>(bufin).subspan(
-          0, std::min(in.size(), bytes_avail)));
+      zstream.avail_in =
+          in.sgetn(reinterpret_cast<char *>(bufin.data()), bytes_avail);
       bytes_avail -= zstream.avail_in;
       zstream.next_in = reinterpret_cast<uint8_t *>(bufin.data());
     };
@@ -335,11 +337,12 @@ template <typename byte> int png::putData(byte *buf, size_t num_bytes) {
   if (num_bytes > avail_out) {
     return -1;
   }
-  memcpy(next_out, reinterpret_cast<char *>(buf), num_bytes);
-  next_out += num_bytes;
+  //memcpy(next_out, reinterpret_cast<char *>(buf), num_bytes);
+  //next_out += num_bytes;
   avail_out -= num_bytes;
   return num_bytes;
 }
+
 int png::writeLine() {
   if (ihdr.color_type == 3) {
     if (ihdr.bit_depth < 8) {
@@ -503,3 +506,27 @@ int png::time(int length) {
   notImplYet(length);
   return 0;
 }
+
+extern frame_buffer fb;
+
+int png::display(int scroll) {
+  for (int col = 0; col < fb.vinfo.yres; col++) {
+    for (int row = 0; row < fb.vinfo.xres; row++) {
+      if (0 < row + scroll && row + scroll < height) {
+        fb.setPixel(fb.vinfo.yres - 1 - col, row, at(row + scroll, col));
+      }
+    }
+  }
+  return 0;
+}
+
+int image::scale(double fctr, std::span<rgb888> kernel, int w, int h) {
+  double scl = 1 / fctr - 0.1;
+  for (int r = 0; r < height; r++) {
+    for (int c = 0; c < width; c++) {
+      long int i = static_cast<int>(c * scl) + w * static_cast<int>(r * scl);
+      at(r, c) = kernel[i];
+    }
+  }
+  return 0;
+}*/

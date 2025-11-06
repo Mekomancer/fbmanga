@@ -16,7 +16,7 @@ grind : build
 	valgrind $(runcmd)
 
 debug : build 
-	gdbtui-- args $(runcmd)
+	gdbtui --args $(runcmd)
 
 tidy : 
 	clang-format -i *.h *.cpp

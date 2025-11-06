@@ -1,41 +1,36 @@
 #pragma once
 
 struct rgb888 {
-  uint8_t red, green, blue;
+  uint8_t red, grn, blu;
 };
 
-template <std::integral T> /*png (network) to host byte order*/
-[[nodiscard]] constexpr T ptoh(T val) noexcept {
+/*png (network) to host byte order*/
+template <std::integral T> [[nodiscard]] constexpr T ptoh(T val) noexcept {
   using enum std::endian;
-  if (native == big) {
+  if constexpr (native == big) {
     return val;
   } else if (native == little) {
     return std::byteswap(val);
   } else {
     static_assert((native == little) || (native == big),
-                  "Mixed-endian byte order not supported");
+                  "Mixed-endian not supported");
   }
 }
-
-template <std::integral T> /*host to png (network) byte order*/
-[[nodiscard]] constexpr T htop(T val) noexcept {
+/*host to png (network) byte order*/
+template <std::integral T> [[nodiscard]] constexpr T htop(T val) noexcept {
   using enum std::endian;
-  if (native == big) {
-    return val;
-  } else if (native == little) {
+  if constexpr (native == big) {
     return std::byteswap(val);
+  } else if (native == little) {
+    return val;
   } else {
     static_assert((native == little) || (native == big),
-                  "Mixed-endian byte order not supported");
+                  "Mixed-endian unsupported");
   }
 }
 
 template <std::unsigned_integral T>
 constexpr T bitscale(T val, int cur, int target) {
-  //  static_assert((val & ~((1<<cur)-1))==0, "Input bitdepth must be greater
-  //  than or eqaul to than real bitdepth"); static_assert(~((T) 0) >=
-  //  ((1<<cur)-1), "The number of bits in the input type must be greater than
-  //  input bitdepth");
   return (((2 * val * ((1 << target) - 1)) / ((1 << cur) - 1)) + 1) / 2;
 };
 
@@ -44,66 +39,84 @@ constexpr uint_t bitscaletrue(uint_t val, int cur, int target) {
   return static_cast<uint_t>(
       (static_cast<double>(val) * static_cast<double>((1 << target) - 1) /
        static_cast<double>((1 << cur) - 1)) +
-      0.5); /* implicit conversion truncs, which is okay because the value
-             * will be non-negitive, so trunc(x) == floor(x). png spec states
-             * the most accurate method for sample depth scaling is the linear
-             * equation `floor((val* maxtargetsamp / maxcursamp)+0.5)` where
-             * maxtargetsamp = 2^target - 1 and maxcursamp = 2^cur - 1
-             * the reason for not using std::floor is that in llvm-19
-             * it is not constexpr, which is useful to see if my function that
-             * skips the conversion to doubles is accurate
-             */
+      0.5);
+  /* implicit conversion truncs, which is okay because the value
+   * will be non-negitive, so trunc(x) == floor(x). png spec states
+   * the most accurate method for sample depth scaling is the linear
+   * equation `floor((val* maxtargetsamp / maxcursamp)+0.5)` where
+   * maxtargetsamp = 2^target - 1 and maxcursamp = 2^cur - 1
+   * the reason for not using std::floor is that in llvm-19
+   * it is not constexpr, which is useful to see if my function that
+   * skips the conversion to doubles is accurate
+   */
 }
 
-template <typename T> class ring_buf {
-private:
-  struct page_t {
-    std::byte *addr;
-    size_t size;
-    bool in_use;
-    page_t();
-    ~page_t();
-  };
-  struct address_t {
-    size_t chunk;
-    size_t offset;
-  };
-  std::vector<page_t> chunks;
-  address_t start = {0, 0};
-  size_t len = 0;
-  address_t end = {0, 0};
-  address_t addrAt(size_t index);
+template <typename t>
+concept bytesized = requires() { new char[(sizeof(t) == 1 ? 0 : -1)]; };
 
+class ring_buf {
 public:
-  void resize(size_t count);
-  template <typename ret_t = T> ret_t pop();
-  size_t mmove(std::span<std::byte> dest);
-  size_t mcopy(std::span<std::byte> dest);
-  T *data();
-  void append(std::byte val);
+  template <bytesized t = uint8_t> size_t peek(std::span<t> buf);
+  template <bytesized t = uint8_t> size_t pop(std::span<t> buf);
+  template <bytesized t = uint8_t> size_t append(std::span<t> buf);
   size_t size();
-  size_t capacity();
+  size_t len();
+  size_t resize();
+  bool auto_resize = true;
+  bool constexpr is_wrapped();
+  ring_buf();
+  ~ring_buf();
+  ring_buf &operator=(ring_buf &other) = delete;
+
+private:
+  std::vector<uint8_t> data;
+  size_t begin;
+  size_t end;
 };
 
-template <typename T> template <typename ret_t> ret_t ring_buf<T>::pop() {
-  ret_t val;
-  if (sizeof(ret_t) + start.offset < chunks[start.chunk].size) {
-    val = *reinterpret_cast<ret_t *>(&chunks[start.chunk].addr[start.offset]);
+template <bytesized t> size_t ring_buf::peek(std::span<t> buf) {
+  size_t num_bytes = std::min(buf.size(), len());
+  if (!is_wrapped()) {
+    buf.subspan(0, num_bytes) =
+        std::span<t>(reinterpret_cast<t *>(&data[begin]), num_bytes);
   } else {
-    std::vector<std::byte> valarray;
-    valarray.resize(sizeof(T));
-    for (int i = 0; i < valarray.size(); i++) {
-      address_t loc = addrAt(i);
-      valarray[i] = chunks[loc.chunk].addr[loc.offset];
+    size_t begin_bytes = std::min(num_bytes, (data.size() - (begin + 1)));
+    buf.subspan(0, begin_bytes) =
+        std::span<t>(reinterpret_cast<t *>(&data[begin]), begin_bytes);
+    if (begin_bytes < num_bytes) {
+      size_t end_bytes = std::min(num_bytes - begin_bytes, end);
+      buf.subspan(begin_bytes, end_bytes) =
+          std::span<t>(reinterpret_cast<t *>(&data[0]), end_bytes);
+      if (end_bytes + begin_bytes != num_bytes) {
+        dprf("ERR: ring_buf::peek(), mark couldn't count properly");
+      }
     }
-    val = *reinterpret_cast<ret_t *>(valarray.data());
   }
-
-  start = addrAt(sizeof(ret_t));
-  len -= sizeof(ret_t);
-  return val;
+  return num_bytes;
 }
 
-constexpr std::string colorTypeString(uint8_t val);
+template <bytesized t> size_t ring_buf::pop(std::span<t> buf) {
+  size_t ret = peek<t>(buf);
+  begin = (begin + buf.size()) % data.size();
+  return ret;
+}
 
-constexpr std::string zlib_return_string(int val);
+template <bytesized t> size_t ring_buf::append(std::span<t> buf) {
+  size_t num_bytes = std::min(buf.size(), data.size() - len());
+  if (end + num_bytes < data.size()) {
+    std::memcpy(data.data(), buf.data(), num_bytes);
+  } else {
+    size_t begin_bytes = std::min(num_bytes, (data.size() - (end + 1)));
+    if (begin_bytes > 0) {
+      std::memcpy(&data[end], buf.data(), begin_bytes);
+    }
+    if (begin_bytes < num_bytes) {
+      size_t end_bytes = std::min(num_bytes - begin_bytes, end);
+      std::memcpy(data.data(), &buf[begin_bytes], end_bytes);
+      if (end_bytes + begin_bytes != num_bytes) {
+        dprf("ERR: ring_buf::peek(), mark couldn't count properly");
+      }
+    }
+  }
+  return num_bytes;
+}

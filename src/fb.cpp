@@ -13,9 +13,9 @@ int frame_buffer::free() { return munmap(addr, finfo.smem_len); }
 void frame_buffer::setPixel(int row, int col, rgb888 color) noexcept {
   static_cast<uint16_t *>(addr)[row * 320 + col] =
       (bitscale<uint16_t>(color.red, 8, vinfo.red.length) << vinfo.red.offset) |
-      (bitscale<uint16_t>(color.green, 8, vinfo.green.length)
+      (bitscale<uint16_t>(color.grn, 8, vinfo.green.length)
        << vinfo.green.offset) |
-      (bitscale<uint16_t>(color.blue, 8, vinfo.blue.length)
+      (bitscale<uint16_t>(color.blu, 8, vinfo.blue.length)
        << vinfo.blue.offset);
 };
 

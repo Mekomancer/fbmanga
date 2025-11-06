@@ -1,71 +1,22 @@
 #include "util.h"
 
-template <typename T> ring_buf<T>::page_t::page_t() {
-  size = getpagesize();
-  addr = new std::byte[size];
-  in_use = false;
-}
-
-template <typename T> ring_buf<T>::page_t::~page_t() { delete[] addr; }
-template <typename T> size_t ring_buf<T>::mmove(std::span<std::byte> dest) {
-  mcopy(dest);
-  start = addrAt(dest.size_bytes());
-  len -= dest.size_bytes();
-  return dest.size_bytes();
-}
-template <typename T> size_t ring_buf<T>::mcopy(std::span<std::byte> dest) {
-  if (dest.size_bytes() + start.offset < chunks[start.chunk].size) {
-    memmove(dest.data(), &chunks[start.chunk].addr[start.offset],
-            dest.size_bytes());
+bool constexpr ring_buf::is_wrapped() {
+  if (end < begin) {
+    return true;
+  } else if (begin == end) {
+    return false;
+  } else if (end > begin) {
+    return false;
   } else {
-    std::vector<std::byte> valarray;
-    valarray.resize(dest.size_bytes());
-    for (int i = 0; i < valarray.size(); i++) {
-      address_t loc = addrAt(i);
-      valarray[i] = chunks[loc.chunk].addr[loc.offset];
-    }
-    memmove(dest.data(), valarray.data(), dest.size_bytes());
+    return true; // if wrapped, extra stuff is done, hopefully catching errors
   }
-
-  return dest.size_bytes();
 }
-
-template <typename T> void ring_buf<T>::resize(size_t count) {
-  chunks.resize((sizeof(T) * count) / (getpagesize()) + 1);
-}
-
-template <typename T> size_t ring_buf<T>::size() {
-  return len;
-  /*if(end.chunk == start.chunk)
-    if(start.offset <= end.offset){
-      return end.offset - start.offset;
-    } else {
-      return
-    }*/
-}
-template <typename T> T *ring_buf<T>::data() {
-  return reinterpret_cast<T *>(&chunks[start.chunk].addr[start.offset]);
-}
-
-template <typename T> ring_buf<T>::address_t ring_buf<T>::addrAt(size_t index) {
-  size_t chunk_num = start.chunk;
-  size_t off_bytes = start.offset;
-  off_bytes += index;
-  chunk_num = off_bytes / getpagesize();
-  off_bytes %= getpagesize();
-  return {chunk_num, off_bytes};
-}
-
-template <typename T> void ring_buf<T>::append(std::byte val) {
-  end.offset += 1;
-  if (end.offset >= chunks[end.chunk].size) {
-    ++end.chunk;
-    end.offset = 0;
-    if (end.chunk >= chunks.size()) {
-      end.chunk = 0;
-    }
+size_t ring_buf::len() {
+  if (is_wrapped()) {
+    return end + (data.size() - (begin + 1));
+  } else {
+    return end - begin;
   }
-  chunks[end.chunk].addr[end.offset] = val;
 }
 
 constexpr std::string colorTypeString(uint8_t val) {
@@ -111,6 +62,3 @@ constexpr std::string zlib_return_string(int val) {
   }
   return ret;
 }
-
-template class ring_buf<std::byte>;
-template class ring_buf<rgb888>;

@@ -1,3 +1,4 @@
+#include "fb.h"
 #include "util.h"
 
 class png {
@@ -35,12 +36,12 @@ private:
       {"bKGD", {0x62, 0x4B, 0x47, 0x44}}, {"hIST", {0x68, 0x49, 0x53, 0x54}},
       {"pHYs", {0x70, 0x48, 0x59, 0x73}}, {"sPLT", {0x73, 0x50, 0x4C, 0x54}},
       {"eXIf", {0x65, 0x58, 0x49, 0x66}}, {"tIME", {0x74, 0x49, 0x4D, 0x45}},
-      // this was all hand typed in, no copy paste, so maybe innacurate...
+      // this was all hand typed in, no copy paste, so may be innacurate...
   };
   static constexpr std::array<uint8_t, 8> signature{0x89, 0x50, 0x4E, 0x47,
                                                     0x0D, 0x0A, 0x1A, 0x0A};
   std::vector<rgb888> palette;
-  bool validate_ihdr() noexcept;
+  bool valid_ihdr() noexcept;
   uint32_t checksum;
   template <typename byte> void crc32(char *data, int len);
   bool checkCRC();
@@ -53,7 +54,6 @@ private:
   bool tainted;
   int writeLine();
   int scanline_mem;
-  template <typename byte> int putData(byte *buffer, size_t num_bytes = 1);
 
 public:
   struct ihdr_t {
@@ -66,11 +66,23 @@ public:
     uint8_t interlace_method;
   } ihdr;
   uint64_t image_size;
-  ring_buf<std::byte> in;
-  char *next_out;
-  size_t avail_out;
+  ring_buf in;
   int init();
   int parseHead();
   int parsePalette(uint32_t length);
   int decode();
+  class image {
+  private:
+    std::vector<rgb888> data;
+    int bpp = 24;
+    int size;
+
+  public:
+    void resize(size_t count) { data.resize(count); }
+    int width;
+    int height;
+    constexpr rgb888 &at(int row, int col) { return data[row * width + col]; };
+    int scale(double fctr, std::span<rgb888> kernel, int w, int h);
+    int display(int scroll);
+  } image;
 };
