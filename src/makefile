@@ -10,7 +10,7 @@ build :
 	ninja -C ..
 
 clean : 
-	ninja - C.. clean 
+	ninja -C .. clean
 
 grind : build 
 	valgrind $(runcmd)

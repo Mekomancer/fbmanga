@@ -1,6 +1,6 @@
 #include "manga.h"
 
-void mangadex::prepareRequest() {
+void mangadex::prepareCurl() {
   curl_easy_setopt(curl, CURLOPT_AUTOREFERER, true);
   curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, CURLFOLLOW_ALL);
@@ -8,6 +8,9 @@ void mangadex::prepareRequest() {
   curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_LAST);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "FBManga/0.1");
   curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_3);
+  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, !false);
+  curl_url_set(url, CURLUPART_SCHEME, "https://", 0);
+  curl_url_set(url, CURLUPART_HOST, base_url.data(), 0);
 };
 
 // curl callback func
@@ -23,7 +26,7 @@ size_t fillbuf(char *ptr, size_t size, size_t nmemb, void *userdata) {
 }
 
 bool mangadex::checkup() {
-  prepareRequest();
+  prepareCurl();
   curl_easy_setopt(curl, CURLOPT_URL, (base_url + "/ping").c_str());
   dprf("ping..");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillbuf);
@@ -54,20 +57,26 @@ std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
   return {""};
 }
 
-int mangadex::init() { return (curl = curl_easy_init()) == NULL ? -1 : 0; }
-
+int mangadex::init() {
+  curl = curl_easy_init();
+  url = curl_url();
+  return 0;
+}
+void mangadex::setEndpoint(std::string_view endp) {
+  if (endp == "get-search-manga") {
+    curl_url_set(url, CURLUPART_PATH, "manga", 0);
+  }
+  return;
+}
 std::vector<std::string> mangadex::getMangaId(std::string_view title) {
-  prepareRequest();
-  curl_easy_setopt(curl, CURLOPT_URL, (base_url + "/manga").c_str());
+  prepareCurl();
+  setEndpoint("get-search-manga");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillbuf);
   std::vector<char> buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   curl_easy_perform(curl);
   buffer.push_back('\000');
   dprf("{:s}", buffer.data());
-  // params = {"title"= title}
-  // response = curl get() or smth idk
-  // return response.data("id") or smth idk
   return {""};
 };
 
@@ -76,5 +85,5 @@ std::vector<std::string> mangadex::getChapterIds(std::string_view manga_id) {
 }
 
 std::vector<int> mangadex::downloadChapter(std::string_view chapter_id) {
-  return {-1}; // dummy func, for now...
+  return {-1};
 };

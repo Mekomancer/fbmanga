@@ -1,17 +1,16 @@
 #include "fb.h"
-
-int frame_buffer::init(std::string_view fb_device) {
-  fd = open(fb_device.data(), O_RDWR);
+//!!!IMPORTANT: this was meant for a 565 screen, may not work for a 888 screen
+frame_buffer::frame_buffer(std::string_view fb_dev) {
+  fd = open(fb_dev.data(), O_RDWR);
   ioctl(fd, FBIOGET_FSCREENINFO, &finfo);
   ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
   addr = mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  return 0;
 }
 
-int frame_buffer::free() { return munmap(addr, finfo.smem_len); }
+frame_buffer::~frame_buffer() { munmap(addr, finfo.smem_len); }
 
 void frame_buffer::setPixel(int row, int col, rgb888 color) noexcept {
-  static_cast<uint16_t *>(addr)[row * 320 + col] =
+  reinterpret_cast<uint16_t *>(addr)[row * 320 + col] =
       (bitscale<uint16_t>(color.red, 8, vinfo.red.length) << vinfo.red.offset) |
       (bitscale<uint16_t>(color.grn, 8, vinfo.green.length)
        << vinfo.green.offset) |
