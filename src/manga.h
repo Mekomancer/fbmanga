@@ -1,6 +1,9 @@
+#include "md.h"
+
 class mangadex {
 public:
   int init();
+  bool checkup(); // returns true if the ping endpoint works
   std::vector<std::string> getScanlationGroups(std::string chap_id);
   int setCreds(std::string_view username, std::string_view password,
                std::string_view id, std::string_view secret);
@@ -13,15 +16,6 @@ public:
   std::string getAccessToken(); // automatically refreshes token if expired;
   const std::string base_url = "https://api.mangadex.dev";
   const time_t access_token_lifetime = 60 * 15; // 15 mins, as of 09/03/25
-  const std::array<std::string, 4> target_demographics = {"shounen", "shoujo",
-                                                          "josei", "seinen"};
-  const std::array<std::string, 4> publication_statuses = {
-      "ongoing", "completed", "hiatus", "cancelled"};
-  const std::array<std::string, 6> reading_statuses = {
-      "reading", "on-hold",    "plan-to-read",
-      "dropped", "re-reading", "completed"};
-  const std::array<std::string, 4> content_ratings = {
-      "safe", "suggestive", "erotica", "pornographic"};
 
 private:
   std::string username;
