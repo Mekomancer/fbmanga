@@ -1,5 +1,4 @@
 #include "config.h"
-#include "options.h"
 
 void configuration::indexArgs(int argn, char *argv[]) {
   for (int i = 0; i < argn; i++) {
@@ -10,16 +9,18 @@ void configuration::indexArgs(int argn, char *argv[]) {
 
 int configuration::parseArgs() {
   for (int i = 0; i < args.size(); i++) {
+    std::string arg = args[i];
+    if (arg == "-h" || arg == "--help") {
+      printHelp();
+      std::exit(EXIT_SUCCESS); // asking for help is not a failure
+    } else if (arg == "-v" || arg == "--version") {
+      printVersion();
+      std::exit(EXIT_SUCCESS);
+    }
   }
   return 0;
 }
 
-int printHelp(std::string_view nullarg) {
-  std::println("USAGE: fbmanga [OPTION]... [TITLE|FILE]...");
-  return 0;
-}
+void printHelp() { std::println("USAGE: fbmanga [OPTION]... [TITLE|FILE]..."); }
 
-int printVersion(std::string_view nullarg) {
-  std::print("FBmanga v0.1");
-  return 0;
-}
+void printVersion() { std::println("FBManga v0.1"); }

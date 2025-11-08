@@ -9,6 +9,8 @@ void mangadex::prepareCurl() {
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "FBManga/0.1");
   curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_3);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, !false);
+  curl_easy_setopt(curl, CURLOPT_CURLU, url);
+
   curl_url_set(url, CURLUPART_SCHEME, "https://", 0);
   curl_url_set(url, CURLUPART_HOST, base_url.data(), 0);
 };
@@ -27,7 +29,6 @@ size_t fillbuf(char *ptr, size_t size, size_t nmemb, void *userdata) {
 
 bool mangadex::checkup() {
   prepareCurl();
-  curl_easy_setopt(curl, CURLOPT_URL, (base_url + "/ping").c_str());
   dprf("ping..");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillbuf);
   std::vector<char> buffer;

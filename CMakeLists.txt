@@ -27,6 +27,7 @@ add_executable(fbmanga
 
 target_precompile_headers(fbmanga
   PRIVATE
+    <regex>
     <fcntl.h>
     <numbers>
     <sys/mman.h>

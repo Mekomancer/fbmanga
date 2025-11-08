@@ -27,15 +27,15 @@ std::string
 }
 
 int main(int argn, char *argv[]) {
-  init();
   conf.indexArgs(argn, argv);
+  conf.parseArgs();
+  init();
   mangadex md;
   md.init();
   int cur_chap = 0;
   int i = 0;
   md.checkup();
   std::vector<std::string> manga_ids = md.getMangaId();
-  dprf("manga ids: ") for (std::string id : manga_ids) { dprf("{}", id); }
   std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[0]);
   std::vector<std::string> img_urls = md.getImgUrls(chap_ids[cur_chap]);
   /* std::vector<png> pngs(img_urls.size());

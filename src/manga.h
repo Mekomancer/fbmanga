@@ -1,5 +1,5 @@
 #include "md.h"
-
+#include "util.h"
 class mangadex {
 public:
   int init();
@@ -14,7 +14,7 @@ public:
   std::vector<std::string> getImgUrls(std::string_view chapter);
   int initTokens();             // call setCreds before calling this func;
   std::string getAccessToken(); // automatically refreshes token if expired;
-  const std::string base_url = "https://api.mangadex.dev";
+  std::string base_url;
   const time_t access_token_lifetime = 60 * 15; // 15 mins, as of 09/03/25
 
 private:
