@@ -16,7 +16,7 @@ private:
   int ztxt(int len);
   int itxt(int len);
   int bkgd(int len);
-  rgb888 background ={ 0,0,0};
+  rgb888 background = {0, 0, 0};
   int hist(int len);
   int phys(int len);
   int splt(int len);
@@ -76,6 +76,7 @@ public:
     std::vector<rgb888> data;
     int bpp = 24;
     int size = 0;
+
   public:
     void resize(size_t count) { data.resize(count); }
     int width;
