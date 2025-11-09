@@ -19,7 +19,9 @@ void text_user_interface::init() {
 
 size_t text_user_interface::choose(std::span<std::string> opts) {
   if (!initialized) {
+#ifdef NDEBUG
     dprf("Warn: tui not initialized, auto choosing {:}", opts[0]);
+#endif
     return 0;
   } else {
   }

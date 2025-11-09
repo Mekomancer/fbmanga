@@ -1,17 +1,18 @@
-#include "config.h"
 #include "manga.h"
 #include "png.h"
 #include "ui.h"
-
+#include "util.h"
 frame_buffer fb;
 configuration conf;
 text_user_interface tui;
 void init() {
   std::setlocale(LC_ALL, "");
 #ifdef NDEBUG
-  tui.init()
+  tui.init();
+#else
+  dprf("Warn: tui not initialized, auto choosing\n");
 #endif
-      curl_global_init(CURL_GLOBAL_ALL);
+  curl_global_init(CURL_GLOBAL_ALL);
   return;
 };
 
@@ -21,9 +22,8 @@ void cleanup(){
 #endif
 }
 
-std::string
-    makefname(std::string_view mangaid, std::string_view chapterid, int image) {
-  return format("{}.{}.{}.png", mangaid, chapterid, image);
+std::string makefname(std::string_view manga, std::string_view chap, int img) {
+  return format("{}.{}.{}.png", manga, chap, img);
 }
 
 int main(int argn, char *argv[]) {
@@ -31,12 +31,12 @@ int main(int argn, char *argv[]) {
   conf.parseArgs();
   init();
   mangadex md;
-  md.init();
   int cur_chap = 0;
   int i = 0;
   md.checkup();
   std::vector<std::string> manga_ids = md.getMangaId();
-  std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[0]);
+  int mangachoice = tui.choose(manga_ids);
+  std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[mangachoice]);
   std::vector<std::string> img_urls = md.getImgUrls(chap_ids[cur_chap]);
   /* std::vector<png> pngs(img_urls.size());
 

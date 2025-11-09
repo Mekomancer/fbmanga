@@ -32,7 +32,8 @@ enum struct rating {
 
 /*-------Objects-------*/
 typedef std::string uuid;
-
+const std::string uuidregex =
+    "[:xdigit:]{8}-[:xdigit:]{4}-[:xdigit:]{4}-[:xdigit:]{4}-[:xdigit:]{12}";
 struct LocalizedString { /*"en":"Place to Place" or "ja-ro":"Acchi Kocchi"*/
   std::string lang;
   std::wstring data;
@@ -73,6 +74,6 @@ struct MangaList {
   int limit;
   int offset;
   int total;
-  void fill(std::string str);
+  void fill(std::string_view str);
 };
 }; // namespace md
