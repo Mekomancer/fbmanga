@@ -64,10 +64,9 @@ int mangadex::setCreds(std::string_view name, std::string_view psswd,
   return 0;
 };
 
-std::vector<std::string> getScanlationGroups(std::string chap) { return {""}; }
 std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
   prepareCurl();
-  setEndpoint("get-at-home-server-chapterId",chapter);
+  setEndpoint("get-at-home-server-chapterId", chapter);
   clearQuery();
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
   std::string buffer;
@@ -132,6 +131,7 @@ std::vector<std::string> mangadex::getChapterIds(std::string_view manga_id) {
   prepareCurl();
   setEndpoint("get-manga-id-feed", manga_id);
   clearQuery();
+  queryAdd("includes[]", "scanlation_group"); /*TODO accuatally use this*/
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);

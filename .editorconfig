@@ -8,4 +8,6 @@ insert_final_newline = true
 ;i am using a 6x12 font and i still only have 80 chars across. ToT
 max_line_length = 78
 trim_trailing_whitespace = true
-
+[makefile]
+indent_style = tab
+indent_size = 8

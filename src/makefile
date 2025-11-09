@@ -1,22 +1,28 @@
 #Made for (n)vim, so i can run ":make" and build my project
-.PHONY : run build clean grind debug tidy
+.PHONY : run build clean grind debug tidy check
 
 runcmd = ../fbmanga ../dat/png/*
-nin = ninja -j1 -C .. 
-run : build 
+nin = ninja -j1 -C ..
+run : build
 	$(runcmd)
 
-build : 
+build :
 	$(nin)
 
-clean : 
+clean :
 	$(nin) clean
 
-grind : build 
+grind : build
 	valgrind $(runcmd)
 
-debug : build 
+debug : build
 	gdbtui --args $(runcmd)
 
 tidy :
 	clang-format -i *.h *.cpp
+
+check :
+	cppcheck --enable=all --report-progress ./
+
+
+

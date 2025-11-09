@@ -16,7 +16,7 @@ private:
   int ztxt(int len);
   int itxt(int len);
   int bkgd(int len);
-  rgb888 background;
+  rgb888 background ={ 0,0,0};
   int hist(int len);
   int phys(int len);
   int splt(int len);
@@ -42,18 +42,18 @@ private:
                                                     0x0D, 0x0A, 0x1A, 0x0A};
   std::vector<rgb888> palette;
   bool valid_ihdr() noexcept;
-  uint32_t checksum;
+  uint32_t checksum = 0;
   template <typename byte> void crc32(char *data, int len);
   bool checkCRC();
   int decodeImageData(uint32_t length);
   int filterline(uint8_t *buf, int length);
   std::vector<uint8_t> curline;
   std::vector<uint8_t> prevline;
-  int bpp;
+  int bpp = 0;
   bool validDepthColor();
-  bool tainted;
+  bool tainted = false;
   int writeLine();
-  int scanline_mem;
+  int scanline_mem = -1;
 
 public:
   struct ihdr_t {
@@ -65,7 +65,7 @@ public:
     uint8_t filter_method;
     uint8_t interlace_method;
   } ihdr;
-  uint64_t image_size;
+  uint64_t image_size = 0;
   ring_buf in;
   int init();
   int parseHead();
@@ -75,8 +75,7 @@ public:
   private:
     std::vector<rgb888> data;
     int bpp = 24;
-    int size;
-
+    int size = 0;
   public:
     void resize(size_t count) { data.resize(count); }
     int width;

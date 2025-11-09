@@ -31,7 +31,6 @@ int main(int argn, char *argv[]) {
   conf.parseArgs();
   init();
   mangadex md;
-  int i = 0;
   md.checkup();
   std::vector<std::string> manga_ids = md.getMangaId();
   int manga_choice = tui.choose(manga_ids);
