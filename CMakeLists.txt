@@ -60,9 +60,9 @@ target_precompile_headers(fbmanga
 #Libs
     <curl/curl.h>
     <curses.h>
-    <json.h>
+    <jsoncpp/json/json.h>
     <zlib.h>
 )
 
-target_link_libraries(fbmanga curl json ncurses z)
+target_link_libraries(fbmanga curl jsoncpp ncurses z)
 

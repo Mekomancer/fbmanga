@@ -2,15 +2,15 @@
 .PHONY : run build clean grind debug tidy
 
 runcmd = ../fbmanga ../dat/png/*
-
+nin = ninja -j1 -C .. 
 run : build 
 	$(runcmd)
 
 build : 
-	ninja -C ..
+	$(nin)
 
 clean : 
-	ninja -C .. clean
+	$(nin) clean
 
 grind : build 
 	valgrind $(runcmd)
@@ -18,5 +18,5 @@ grind : build
 debug : build 
 	gdbtui --args $(runcmd)
 
-tidy : 
+tidy :
 	clang-format -i *.h *.cpp

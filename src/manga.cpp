@@ -1,4 +1,7 @@
 #include "manga.h"
+#include "util.h"
+
+extern configuration conf;
 
 void mangadex::prepareCurl() {
   curl_easy_setopt(curl, CURLOPT_AUTOREFERER, true);

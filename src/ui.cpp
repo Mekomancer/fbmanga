@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "util.h"
 
 template <typename cat, int ct> void foo() { return (cat)ct; }
 

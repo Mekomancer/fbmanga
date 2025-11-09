@@ -1,5 +1,12 @@
+using namespace std::literals;
 #pragma once
-
+#ifdef NDEBUG
+#define dprf(...)
+#else
+#define dprf(...)                                                              \
+  std::print(__VA_ARGS__);                                                     \
+  fflush(0);
+#endif
 struct rgb888 {
   uint8_t red, grn, blu;
 };
@@ -120,3 +127,21 @@ template <bytesized t> size_t ring_buf::append(std::span<t> buf) {
   }
   return num_bytes;
 }
+
+class configuration {
+public:
+  std::string mangadex_api_url = "api.mangadex."
+#ifndef NDEBUG
+                                 "dev";
+#else
+                                 "org";
+#endif
+  void indexArgs(int argn, char *argv[]);
+  int parseArgs();
+
+private:
+  std::vector<std::string> args;
+};
+
+void printHelp();
+void printVersion();
