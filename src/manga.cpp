@@ -134,7 +134,8 @@ mangadex::getChapters(std::string_view manga_id) {
   prepareCurl();
   setEndpoint("get-manga-id-feed", manga_id);
   clearQuery();
-  queryAdd("includes[]", "scanlation_group"); /*TODO accuatally use this*/
+  queryAdd("includes[]", "scanlation_group");
+  queryAdd("translatedLanguage[]", "en");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
