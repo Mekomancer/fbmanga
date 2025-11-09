@@ -10,7 +10,7 @@ public:
   void printInfo();
   void setPixel(int row, int col, rgb888 color) noexcept;
   rgb888 getPixel(int row, int col);
-  frame_buffer(std::string_view fb_device = "/dev/fb0");
+  frame_buffer(std::filesystem::path fb_device = "/dev/fb0");
   ~frame_buffer();
 
 private:

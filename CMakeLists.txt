@@ -40,6 +40,7 @@ target_precompile_headers(fbmanga
     <chrono>
     <cstdint>
     <cstring>
+    <filesystem>
     <format>
     <functional>
     <map>
