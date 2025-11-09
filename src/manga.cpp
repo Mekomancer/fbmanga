@@ -66,7 +66,22 @@ int mangadex::setCreds(std::string_view name, std::string_view psswd,
 
 std::vector<std::string> getScanlationGroups(std::string chap) { return {""}; }
 std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
-  return {""};
+  prepareCurl();
+  setEndpoint("get-at-home-server-chapterId",chapter);
+  clearQuery();
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
+  std::string buffer;
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+  curl_easy_perform(curl);
+  std::vector<std::string> ret;
+  rj::Document doc;
+  doc.Parse(buffer.c_str());
+  std::string base = doc["baseUrl"].GetString();
+  std::string hash = doc["chapter"]["hash"].GetString();
+  for (rj::Value &val : doc["chapter"]["data"].GetArray()) {
+    ret.emplace_back(base + "data" + hash + val.GetString());
+  }
+  return ret;
 }
 
 mangadex::mangadex() {
@@ -84,6 +99,8 @@ void mangadex::setEndpoint(std::string_view endp) {
 void mangadex::setEndpoint(std::string_view endp, std::string_view val) {
   if (endp == "get-manga-id-feed") {
     curl_url_set(url, CURLUPART_PATH, ("manga/"s + val + "/feed"s).c_str(), 0);
+  } else if (endp == "get-at-home-server-chapterId") {
+    curl_url_set(url, CURLUPART_PATH, ("at-home/server/"s + val).c_str(), 0);
   }
   return;
 }
