@@ -34,9 +34,11 @@ int main(int argn, char *argv[]) {
   md.checkup();
   std::vector<std::string> manga_ids = md.getMangaId();
   int manga_choice = tui.choose(manga_ids);
-  std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[manga_choice]);
-  int chapter_choice = tui.choose(chap_ids);
-  std::vector<std::string> img_urls = md.getImgUrls(chap_ids[chapter_choice]);
+  std::pair<std::vector<std::string>, std::vector<std::string>> chaps =
+      md.getChapters(manga_ids[manga_choice]);
+  int chapter_choice = tui.choose(chaps.second);
+  std::vector<std::string> img_urls =
+      md.getImgUrls(chaps.first[chapter_choice]);
   /* std::vector<png> pngs(img_urls.size());
 
   pngs[i].init();

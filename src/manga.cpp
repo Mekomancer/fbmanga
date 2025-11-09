@@ -100,6 +100,8 @@ void mangadex::setEndpoint(std::string_view endp, std::string_view val) {
     curl_url_set(url, CURLUPART_PATH, ("manga/"s + val + "/feed"s).c_str(), 0);
   } else if (endp == "get-at-home-server-chapterId") {
     curl_url_set(url, CURLUPART_PATH, ("at-home/server/"s + val).c_str(), 0);
+  } else if (endp == "get-group-id") {
+    curl_url_set(url, CURLUPART_PATH, ("group/"s + val).c_str(), 0);
   }
   return;
 }
@@ -127,7 +129,8 @@ std::vector<std::string> mangadex::getMangaId(std::string_view title) {
   return ret;
 };
 
-std::vector<std::string> mangadex::getChapterIds(std::string_view manga_id) {
+std::pair<std::vector<std::string>, std::vector<std::string>>
+mangadex::getChapters(std::string_view manga_id) {
   prepareCurl();
   setEndpoint("get-manga-id-feed", manga_id);
   clearQuery();
@@ -136,12 +139,31 @@ std::vector<std::string> mangadex::getChapterIds(std::string_view manga_id) {
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   curl_easy_perform(curl);
-  std::vector<std::string> ret;
+  std::pair<std::vector<std::string>, std::vector<std::string>> ret;
   rj::Document doc;
   doc.Parse(buffer.c_str());
   for (rj::Value &val : doc["data"].GetArray()) {
-    ret.emplace_back(val["id"].GetString());
-  };
+    std::string id = val["id"].GetString();
+    rj::Value &attr = val["attributes"];
+    std::string desc;
+    if (!attr["chapter"].IsNull()) {
+      desc += attr["chapter"].GetString() + " "s;
+    }
+    if (!attr["volume"].IsNull()) {
+      desc += "vol "s + attr["volume"].GetString() + " "s;
+    }
+    if (!attr["title"].IsNull()) {
+      desc += attr["title"].GetString();
+      desc += " ";
+    }
+    for (rj::Value &rel : val["relationships"].GetArray()) {
+      if (std::string(rel["type"].GetString()) == "scanlation_group") {
+        desc += rel["attributes"]["name"].GetString() + " "s;
+      }
+    };
+    ret.first.push_back(id);
+    ret.second.push_back(desc);
+  }
   return ret;
 }
 

@@ -5,7 +5,8 @@ public:
   std::vector<std::string> getScanlationGroups(std::string chap_id);
   int setCreds(std::string_view username, std::string_view password,
                std::string_view id, std::string_view secret);
-  std::vector<std::string> getChapterIds(std::string_view manga_id);
+  std::pair<std::vector<std::string>, std::vector<std::string>>
+  getChapters(std::string_view manga_id);
   std::vector<std::string> getMangaId(std::string_view title = "acchi kocchi");
   /*fight me, i dare u. i own this repo, i make the decsions.*/
   std::vector<int> downloadChapter(std::string_view manga);
@@ -19,6 +20,7 @@ private:
   void clearQuery();
   void setEndpoint(std::string_view endpoint);
   void setEndpoint(std::string_view endpoint, std::string_view value);
+  std::string getGroupName(std::string_view groupId);
   CURLU *url;
   std::string username;
   std::string password;
