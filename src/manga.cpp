@@ -2,6 +2,7 @@
 #include "util.h"
 
 extern configuration conf;
+namespace rj = rapidjson;
 
 void mangadex::prepareCurl() {
   curl_easy_setopt(curl, CURLOPT_AUTOREFERER, true);
@@ -80,6 +81,12 @@ void mangadex::setEndpoint(std::string_view endp) {
   }
   return;
 }
+void mangadex::setEndpoint(std::string_view endp, std::string_view val) {
+  if (endp == "get-manga-id-feed") {
+    curl_url_set(url, CURLUPART_PATH, ("manga/"s + val + "/feed"s).c_str(), 0);
+  }
+  return;
+}
 // void mangadex::client_secret
 void mangadex::queryAdd(std::string_view param, std::string_view val) {
   curl_url_set(url, CURLUPART_QUERY, (param + "="s + val).c_str(),
@@ -95,13 +102,30 @@ std::vector<std::string> mangadex::getMangaId(std::string_view title) {
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   curl_easy_perform(curl);
-  md::MangaList ml;
-  ml.fill(buffer);
-  return {""};
+  std::vector<std::string> ret;
+  rj::Document doc;
+  doc.Parse(buffer.c_str());
+  for (rj::Value &val : doc["data"].GetArray()) {
+    ret.emplace_back(val["id"].GetString());
+  };
+  return ret;
 };
 
 std::vector<std::string> mangadex::getChapterIds(std::string_view manga_id) {
-  return {""};
+  prepareCurl();
+  setEndpoint("get-manga-id-feed", manga_id);
+  clearQuery();
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
+  std::string buffer;
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+  curl_easy_perform(curl);
+  std::vector<std::string> ret;
+  rj::Document doc;
+  doc.Parse(buffer.c_str());
+  for (rj::Value &val : doc["data"].GetArray()) {
+    ret.emplace_back(val["id"].GetString());
+  };
+  return ret;
 }
 
 std::vector<int> mangadex::downloadChapter(std::string_view chapter_id) {

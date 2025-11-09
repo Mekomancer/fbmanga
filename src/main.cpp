@@ -31,13 +31,13 @@ int main(int argn, char *argv[]) {
   conf.parseArgs();
   init();
   mangadex md;
-  int cur_chap = 0;
   int i = 0;
   md.checkup();
   std::vector<std::string> manga_ids = md.getMangaId();
-  int mangachoice = tui.choose(manga_ids);
-  std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[mangachoice]);
-  std::vector<std::string> img_urls = md.getImgUrls(chap_ids[cur_chap]);
+  int manga_choice = tui.choose(manga_ids);
+  std::vector<std::string> chap_ids = md.getChapterIds(manga_ids[manga_choice]);
+  int chapter_choice = tui.choose(chap_ids);
+  std::vector<std::string> img_urls = md.getImgUrls(chap_ids[chapter_choice]);
   /* std::vector<png> pngs(img_urls.size());
 
   pngs[i].init();

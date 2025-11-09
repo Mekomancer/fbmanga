@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)#abitrary 
+cmake_minimum_required(VERSION 3.31)#abitrary
 
 set(CMAKE_CXX_STANDARD 26)# we going crazy here, its not even 2026 yet
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +15,8 @@ set(CMAKE_SOURCE_DIR ./src/)
 set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53'")
 #needed for __crc32b() builtin-------^^^^^^^^^^^^^^^^^^
 
+find_package(RapidJSON)
+
 project(FBManga
   VERSION 0.0.0.0
   DESCRIPTION "Frame-buffer based manga viewer"
@@ -25,7 +27,6 @@ add_executable(fbmanga
   src/fb.cpp
   src/main.cpp
   src/manga.cpp
-  src/md.cpp
   src/png.cpp
   src/ui.cpp
   src/util.cpp
@@ -60,9 +61,9 @@ target_precompile_headers(fbmanga
 #Libs
     <curl/curl.h>
     <curses.h>
-    <jsoncpp/json/json.h>
+    <rapidjson/document.h>
     <zlib.h>
 )
 
-target_link_libraries(fbmanga curl jsoncpp ncurses z)
+target_link_libraries(fbmanga curl ncurses z)
 

@@ -1,5 +1,3 @@
-#include "md.h"
-
 class mangadex {
 public:
   mangadex();
@@ -20,6 +18,7 @@ private:
   void queryAdd(std::string_view param, std::string_view val);
   void clearQuery();
   void setEndpoint(std::string_view endpoint);
+  void setEndpoint(std::string_view endpoint, std::string_view value);
   CURLU *url;
   std::string username;
   std::string password;
