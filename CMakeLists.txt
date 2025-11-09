@@ -1,9 +1,14 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.31)#abitrary 
 
 set(CMAKE_CXX_STANDARD 26)# we going crazy here, its not even 2026 yet
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+#set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE iwyu)
+#set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+#set(CMAKE_CXX_CPPCHECK cppcheck)
+set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) #for clangd
 set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
 set(CMAKE_SOURCE_DIR ./src/)
@@ -17,43 +22,47 @@ project(FBManga
 )
 
 add_executable(fbmanga
+  src/fb.cpp
   src/main.cpp
   src/manga.cpp
-  src/config.cpp
+  src/md.cpp
   src/png.cpp
+  src/ui.cpp
   src/util.cpp
-  src/fb.cpp
 )
 
 target_precompile_headers(fbmanga
   PRIVATE
-    <regex>
-    <fcntl.h>
-    <numbers>
-    <sys/mman.h>
-    <string>
-    <chrono>
+#C++ stdlib
     <array>
-    <vector>
     <bit>
-    <unistd.h>
-    <curl/curl.h>
+    <chrono>
+    <cstdint>
     <cstring>
     <format>
-    <print>
-    <zlib.h>
-    <map>
     <functional>
-    "src/debug.h"
-    <sys/stat.h>
+    <map>
     <memory>
-    <curses.h>
+    <numbers>
+    <print>
+    <regex>
     <span>
-    <cstdint>
-    <linux/fb.h>
+    <string>
+    <vector>
+#System
     <arm_acle.h>
+    <fcntl.h>
+    <linux/fb.h>
+    <sys/mman.h>
+    <sys/stat.h>
     <sys/ioctl.h>
+    <unistd.h>
+#Libs
+    <curl/curl.h>
+    <curses.h>
+    <json.h>
+    <zlib.h>
 )
 
-target_link_libraries(fbmanga curl z ncurses)
+target_link_libraries(fbmanga curl json ncurses z)
 
