@@ -2,59 +2,6 @@
 #include "util.h"
 
 class png {
-private:
-  int chrm(int len);
-  int gama(int len);
-  double gamma = 1.0;
-  int iccp(int len);
-  int sbit(int len);
-  int srgb(int len);
-  int cicp(int len);
-  int mdcv(int len);
-  int clli(int len);
-  int text(int len);
-  int ztxt(int len);
-  int itxt(int len);
-  int bkgd(int len);
-  rgb888 background = {0, 0, 0};
-  int hist(int len);
-  int phys(int len);
-  int splt(int len);
-  int exif(int len);
-  int time(int len);
-  int trns(int len);
-  void notImplYet(int len);
-  std::map<std::string, std::array<char, 4>> chunk_type{
-      {"IHDR", {0x49, 0x48, 0x44, 0x52}}, {"PLTE", {0x50, 0x4C, 0x54, 0x45}},
-      {"IDAT", {0x49, 0x44, 0x41, 0x54}}, {"IEND", {0x49, 0x45, 0x4E, 0x44}},
-      {"tRNS", {0x74, 0x52, 0x4E, 0x52}}, {"cHRM", {0x63, 0x48, 0x52, 0x4D}},
-      {"gAMA", {0x67, 0x41, 0x4D, 0x41}}, {"iCCP", {0x69, 0x43, 0x43, 0x50}},
-      {"sBIT", {0x73, 0x42, 0x49, 0x54}}, {"sRGB", {0x73, 0x52, 0x47, 0x42}},
-      {"cICP", {0x63, 0x49, 0x43, 0x50}}, {"mDCV", {0x6D, 0x44, 0x43, 0x56}},
-      {"cLLI", {0x63, 0x4C, 0x4C, 0x49}}, {"tEXt", {0x74, 0x45, 0x58, 0x74}},
-      {"zTXt", {0x7A, 0x54, 0x58, 0x74}}, {"iTXt", {0x69, 0x54, 0x58, 0x74}},
-      {"bKGD", {0x62, 0x4B, 0x47, 0x44}}, {"hIST", {0x68, 0x49, 0x53, 0x54}},
-      {"pHYs", {0x70, 0x48, 0x59, 0x73}}, {"sPLT", {0x73, 0x50, 0x4C, 0x54}},
-      {"eXIf", {0x65, 0x58, 0x49, 0x66}}, {"tIME", {0x74, 0x49, 0x4D, 0x45}},
-      // this was all hand typed in, no copy paste, so may be innacurate...
-  };
-  static constexpr std::array<uint8_t, 8> signature{0x89, 0x50, 0x4E, 0x47,
-                                                    0x0D, 0x0A, 0x1A, 0x0A};
-  std::vector<rgb888> palette;
-  bool valid_ihdr() noexcept;
-  uint32_t checksum = 0;
-  template <typename byte> void crc32(char *data, int len);
-  bool checkCRC();
-  int decodeImageData(uint32_t length);
-  int filterline(uint8_t *buf, int length);
-  std::vector<uint8_t> curline;
-  std::vector<uint8_t> prevline;
-  int bpp = 0;
-  bool validDepthColor();
-  bool tainted = false;
-  int writeLine();
-  int scanline_mem = -1;
-
 public:
   struct ihdr_t {
     uint32_t width;
@@ -85,4 +32,55 @@ public:
     int scale(double fctr, std::span<rgb888> kernel, int w, int h);
     int display(int scroll);
   } image;
+
+private:
+  int chrm(int len);
+  int gama(int len);
+  double gamma = 1.0;
+  int iccp(int len);
+  int sbit(int len);
+  int srgb(int len);
+  int cicp(int len);
+  int mdcv(int len);
+  int clli(int len);
+  int text(int len);
+  int ztxt(int len);
+  int itxt(int len);
+  int bkgd(int len);
+  rgb888 background = {0, 0, 0};
+  int hist(int len);
+  int phys(int len);
+  int splt(int len);
+  int exif(int len);
+  int time(int len);
+  int trns(int len);
+  void notImplYet(int len);
+  std::map<std::string, uint32_t> chunk_type{
+      {"IHDR", htop(0x49'48'44'52)}, {"PLTE", htop(0x50'4C'54'45)},
+      {"IDAT", htop(0x49'44'41'54)}, {"IEND", htop(0x49'45'4E'44)},
+      {"tRNS", htop(0x74'52'4E'52)}, {"cHRM", htop(0x63'48'52'4D)},
+      {"gAMA", htop(0x67'41'4D'41)}, {"iCCP", htop(0x69'43'43'50)},
+      {"sBIT", htop(0x73'42'49'54)}, {"sRGB", htop(0x73'52'47'42)},
+      {"cICP", htop(0x63'49'43'50)}, {"mDCV", htop(0x6D'44'43'56)},
+      {"cLLI", htop(0x63'4C'4C'49)}, {"tEXt", htop(0x74'45'58'74)},
+      {"zTXt", htop(0x7A'54'58'74)}, {"iTXt", htop(0x69'54'58'74)},
+      {"bKGD", htop(0x62'4B'47'44)}, {"hIST", htop(0x68'49'53'54)},
+      {"pHYs", htop(0x70'48'59'73)}, {"sPLT", htop(0x73'50'4C'54)},
+      {"eXIf", htop(0x65'58'49'66)}, {"tIME", htop(0x74'49'4D'45)},
+      // this was all hand typed in, no copy paste, so may be innacurate...
+  };
+  static constexpr uint64_t signature = htop(0x89'50'4E'47'0D'0A'1A'0A);
+  std::vector<rgb888> palette;
+  bool valid_ihdr() noexcept;
+  uint32_t checksum = 0;
+  bool checkCRC(uint32_t length);
+  int decodeImageData(uint32_t length);
+  int filterline(uint8_t *buf, int length);
+  std::vector<uint8_t> curline;
+  std::vector<uint8_t> prevline;
+  int bpp = 0;
+  bool validDepthColor();
+  bool tainted = false;
+  int writeLine();
+  int scanline_mem = -1;
 };
