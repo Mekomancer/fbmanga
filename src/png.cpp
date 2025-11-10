@@ -1,7 +1,6 @@
 #include "png.h"
-
 template <bytesized t = std::byte> uint32_t crc32(std::span<t> dat) {
-  uint32_t ret = ~0;
+  uint32_t ret;
 #if __ARM_FEATURE_CRC32 == 1
   // use intrisics
   for (int i = 0; i < dat.size(); i++) {
@@ -11,7 +10,7 @@ template <bytesized t = std::byte> uint32_t crc32(std::span<t> dat) {
   // use zlibs crc
   crc32_z(uint32_t ret, dat.data(), dat.length());
 #endif
-  return ~ret;
+  return ret;
 }
 
 bool png::validDepthColor() {
@@ -29,31 +28,38 @@ bool png::validDepthColor() {
   };
   return true;
 };
+/*
 int png::parseHead() {
-  uint64_t file_sig = ptoh(in.pop<uint64_t>());
+  std::array<uint8_t, signature.size()> file_sig;
+  in.pop(std::span<uint8_t>(file_sig));
   if (file_sig != signature) {
-    dprf("ERR: Bad file sig\n");
-    dprf("    file sig: {:16x}\n", file_sig);
-    dprf("    png  sig: {:16x}\n", signature);
+    dprf("ERR: Bad file sig");
+    dprf("    file sig: {:} {:} {:} {:} {:} {:} {:} {:}\n", file_sig[0],
+         file_sig[1], file_sig[2], file_sig[3], file_sig[4], file_sig[5],
+         file_sig[6], file_sig[7]);
+    dprf("    png  sig: {:} {:} {:} {:} {:} {:} {:} {:}\n", signature[0],
+         signature[1], signature[2], signature[3], signature[4], signature[5],
+         signature[6], signature[7]);
     tainted = true;
   }
-  uint32_t len = ptoh(in.pop<uint32_t>());
+  uint32_t len;
+  in.sgetn(reinterpret_cast<char *>(&len), sizeof(len));
+  len = ptoh(len);
   if (len != 13) {
-
     dprf("ERR: Bad IHDR (first chunk's length should be 13, is {:})\n", len);
   };
-  if(!checkCRC(len)){
-    return -1;
-  };
-  uint32_t type = ptoh(in.pop<uint32_t>());
+  checksum = ~0;
+  std::array<char, 4> buf;
+  in.sgetn(buf.data(), buf.size());
+
   bool bad_header = false;
-  if (type != chunk_type["IHDR"]) {
-    dprf("ERR: First chunk is not IHDR, (got {:8x})\n", type);
+  if (buf != chunk_type["IHDR"]) {
+    dprf("ERR: First chunk is not IHDR, (got {:?}{:?}{:?}{:?})\n", buf[0],
+         buf[1], buf[2], buf[3]);
     tainted = true;
     return -1;
   }
-  ihdr
-  ihdr.width = ptoh(in.());
+  ihdr.width = ptoh(in.sbumpc());
   dprf("Width: {:d}, ", ihdr.width);
   ihdr.height = ptoh(in.sbumpc());
   dprf("Height: {:d}, ", ihdr.height);
@@ -111,14 +117,16 @@ int png::parseHead() {
   return 0;
 }
 
-bool png::checkCRC(uint32_t len) {
-  std::vector<uint8_t> buf(len + 8/*crc and chunk type are 4 bytes each*/);
-  in.peek<uint8_t>(buf);
-  uint32_t calc = crc32<uint8_t>(std::span(buf).subspan(0,len + 4));
+bool png::checkCRC() {
+  uint32_t calculated = (~0) ^ checksum;
+  uint32_t crc;
+  in.sgetn(reinterpret_cast<char *>(&crc), sizeof(crc));
+  crc = ptoh(crc);
   if (calculated == crc) {
     return true;
   } else {
-    dprf("CRC check failed ToT\ncalculted\t{:}\nexpected\t{:}\n", calc, crc);
+    //    dprf("CRC check failed ToT\ncalculted\t{:}\nexpected\t{:}\n",
+    //	calculated, crc);
     return false;
   }
   return false;
@@ -129,6 +137,7 @@ int png::init() {
   image_size = 10;
   return 0;
 }
+
 
 int png::decode() {
   dprf("Decoding PNG\n");
@@ -328,8 +337,8 @@ template <typename byte> int png::putData(byte *buf, size_t num_bytes) {
   if (num_bytes > avail_out) {
     return -1;
   }
-  // memcpy(next_out, reinterpret_cast<char *>(buf), num_bytes);
-  // next_out += num_bytes;
+  //memcpy(next_out, reinterpret_cast<char *>(buf), num_bytes);
+  //next_out += num_bytes;
   avail_out -= num_bytes;
   return num_bytes;
 }
@@ -520,4 +529,4 @@ int image::scale(double fctr, std::span<rgb888> kernel, int w, int h) {
     }
   }
   return 0;
-}
+}*/

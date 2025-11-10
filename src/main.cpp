@@ -39,28 +39,27 @@ int main(int argn, char *argv[]) {
   int chapter_choice = tui.choose(chaps.second);
   std::vector<std::string> img_urls =
       md.getImgUrls(chaps.first[chapter_choice]);
-  std::vector<png> pngs(img_urls.size());
-  for (int i = 0; i < pngs.size(); ++i) {
-    pngs[i].init();
-    pngs[i].parseHead();
-    std::vector<rgb888> obuf;
-    obuf.resize(pngs[i].ihdr.width * pngs[i].ihdr.height);
-    pngs[i].decode();
-    double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
-    for (int line = 0; line < pngs[i].image.height; line++) {
-      pngs[i].image.display(line);
+  /* std::vector<png> pngs(img_urls.size());
+
+  pngs[i].init();
+  pngs[i].parseHead();
+  std::vector<rgb888> obuf;
+  obuf.resize(pngs[i].ihdr.width * pngs[i].ihdr.height);
+  pngs[i].decode();
+  double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
+  for (int line = 0; line < pngs[i].image.height; line++) {
+    pngs[i].image.display(line);
 #ifdef NDEBUG
-      switch (getch()) {
-      case KEY_UP:
-        line -= 40;
-        break;
-      case KEY_DOWN:
-        line += 40;
-        break;
-      }
+    switch (getch()) {
+    case KEY_UP:
+      line -= 40;
+      break;
+    case KEY_DOWN:
+      line += 40;
+      break;
+    }
 #endif
-    };
-  }
+  };*/
   curl_global_cleanup();
   return 0;
 }

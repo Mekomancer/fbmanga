@@ -64,12 +64,7 @@ concept bytesized = requires() { new char[(sizeof(t) == 1 ? 0 : -1)]; };
 class ring_buf {
 public:
   template <bytesized t = uint8_t> size_t peek(std::span<t> buf);
-  template <bytesized t = uint8_t> size_t read(std::span<t> buf);
-  template <typename t> t pop() {
-    std::vector<uint8_t> buf(sizeof(t));
-    read(std::span(buf));
-    return *reinterpret_cast<t *>(buf.data);
-  }
+  template <bytesized t = uint8_t> size_t pop(std::span<t> buf);
   template <bytesized t = uint8_t> size_t append(std::span<t> buf);
   size_t size();
   size_t len();
@@ -107,7 +102,7 @@ template <bytesized t> size_t ring_buf::peek(std::span<t> buf) {
   return num_bytes;
 }
 
-template <bytesized t> size_t ring_buf::read(std::span<t> buf) {
+template <bytesized t> size_t ring_buf::pop(std::span<t> buf) {
   size_t ret = peek<t>(buf);
   begin = (begin + buf.size()) % data.size();
   return ret;
