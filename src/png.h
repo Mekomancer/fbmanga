@@ -1,6 +1,7 @@
 #include "fb.h"
 #include "util.h"
 
+int display(double factor, std::span<rgb888> image, int w, int h, int scroll);
 class png {
 public:
   struct ihdr_t {
@@ -14,24 +15,11 @@ public:
   } ihdr;
   uint64_t image_size = 0;
   ring_buf in;
+  std::vector<rgb888> image;
   int init();
   int parseHead();
   int parsePalette(uint32_t length);
   int decode();
-  class image {
-  private:
-    std::vector<rgb888> data;
-    int bpp = 24;
-    int size = 0;
-
-  public:
-    void resize(size_t count) { data.resize(count); }
-    int width;
-    int height;
-    constexpr rgb888 &at(int row, int col) { return data[row * width + col]; };
-    int scale(double fctr, std::span<rgb888> kernel, int w, int h);
-    int display(int scroll);
-  } image;
 
 private:
   int chrm(int len);
@@ -75,7 +63,7 @@ private:
   uint32_t checksum = 0;
   bool checkCRC(uint32_t length);
   int decodeImageData(uint32_t length);
-  int filterline(uint8_t *buf, int length);
+  int filterline(const uint8_t *buf, int length);
   std::vector<uint8_t> curline;
   std::vector<uint8_t> prevline;
   int bpp = 0;

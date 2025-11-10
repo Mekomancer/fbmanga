@@ -12,7 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) #for clangd
 set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
 set(CMAKE_SOURCE_DIR ./src/)
-set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53'")
+set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53' -Wall -Wextra")
 #needed for __crc32b() builtin-------^^^^^^^^^^^^^^^^^^
 
 find_package(RapidJSON)

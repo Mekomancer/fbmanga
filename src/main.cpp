@@ -2,7 +2,7 @@
 #include "png.h"
 #include "ui.h"
 #include "util.h"
-frame_buffer fb;
+frame_buffer fb();
 configuration conf;
 text_user_interface tui;
 void init() {
@@ -40,15 +40,16 @@ int main(int argn, char *argv[]) {
   std::vector<std::string> img_urls =
       md.getImgUrls(chaps.first[chapter_choice]);
   std::vector<png> pngs(img_urls.size());
-  for (int i = 0; i < pngs.size(); ++i) {
+  for (uint i = 0; i < pngs.size(); ++i) {
     pngs[i].init();
     pngs[i].parseHead();
     std::vector<rgb888> obuf;
     obuf.resize(pngs[i].ihdr.width * pngs[i].ihdr.height);
     pngs[i].decode();
     double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
-    for (int line = 0; line < pngs[i].image.height; line++) {
-      pngs[i].image.display(line);
+    for (uint line = 0; line < pngs[i].ihdr.height; line++) {
+      display(factor, pngs[i].image, pngs[i].ihdr.width, pngs[i].ihdr.height,
+              line);
 #ifdef NDEBUG
       switch (getch()) {
       case KEY_UP:

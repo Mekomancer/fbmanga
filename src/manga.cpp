@@ -19,17 +19,6 @@ void mangadex::prepareCurl() {
 };
 
 // curl callback func
-size_t fillbuf(char *ptr, size_t size, size_t nmemb, void *userdata) {
-  std::vector<uint8_t> *buf =
-      reinterpret_cast<std::vector<uint8_t> *>(userdata);
-  if (size != 1) {
-    dprf("WARN: size ({:}) != 1, strange...\n", size);
-  }
-  buf->resize(buf->size() + nmemb);
-  std::memcpy(buf->data() + buf->size() - nmemb, ptr, nmemb);
-  return nmemb;
-}
-// ditto
 size_t fillstr(char *ptr, size_t size, size_t nmemb, void *userdata) {
   if (size != 1) {
     dprf("WARN: size ({:}) != 1, strange...\n", size);
@@ -41,12 +30,11 @@ size_t fillstr(char *ptr, size_t size, size_t nmemb, void *userdata) {
 bool mangadex::checkup() {
   prepareCurl();
   setEndpoint("get-ping");
-  std::vector<char> buffer;
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillbuf);
+  std::string buffer;
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   CURLcode ret = curl_easy_perform(curl);
-  buffer.push_back('\000');
-  if (std::format("{:s}", buffer.data()) == "pong") {
+  if (buffer == "pong") {
     return true;
   } else {
     dprf("ERR: MangaDex's ping healthcheck failed, curl returned {:}({:})",
@@ -77,15 +65,18 @@ std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
   doc.Parse(buffer.c_str());
   std::string base = doc["baseUrl"].GetString();
   std::string hash = doc["chapter"]["hash"].GetString();
-  for (rj::Value &val : doc["chapter"]["data"].GetArray()) {
-    ret.emplace_back(base + "data" + hash + val.GetString());
-  }
+  std::transform(doc["chapter"]["data"].GetArray().Begin(),
+                 doc["chapter"]["data"].GetArray().End(), ret.begin(),
+                 [base, hash](rj::Value &val) {
+                   return base + "data" + hash + val.GetString();
+                 });
   return ret;
 }
 
 mangadex::mangadex() {
   curl = curl_easy_init();
   url = curl_url();
+  access_token_expiration_date = 0;
 }
 void mangadex::setEndpoint(std::string_view endp) {
   if (endp == "get-search-manga") {
@@ -123,9 +114,9 @@ std::vector<std::string> mangadex::getMangaId(std::string_view title) {
   std::vector<std::string> ret;
   rj::Document doc;
   doc.Parse(buffer.c_str());
-  for (rj::Value &val : doc["data"].GetArray()) {
-    ret.emplace_back(val["id"].GetString());
-  };
+  std::transform(
+      doc["data"].GetArray().Begin(), doc["data"].GetArray().End(), ret.begin(),
+      [](rj::Value &val) { return std::string(val["id"].GetString()); });
   return ret;
 };
 
@@ -169,5 +160,6 @@ mangadex::getChapters(std::string_view manga_id) {
 }
 
 std::vector<int> mangadex::downloadChapter(std::string_view chapter_id) {
+  dprf("", chapter_id);
   return {-1};
 };

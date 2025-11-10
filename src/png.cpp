@@ -1,10 +1,13 @@
 #include "png.h"
+#include "util.h"
 
-template <bytesized t = std::byte> uint32_t crc32(std::span<t> dat) {
+template <typename t>
+  requires(sizeof(t) == 1)
+uint32_t crc32(std::span<t> dat) {
   uint32_t ret = ~0;
 #if __ARM_FEATURE_CRC32 == 1
   // use intrisics
-  for (int i = 0; i < dat.size(); i++) {
+  for (uint i = 0; i < dat.size(); i++) {
     ret = __crc32b(ret, static_cast<char>(dat[i]));
   }
 #else
@@ -42,44 +45,38 @@ int png::parseHead() {
 
     dprf("ERR: Bad IHDR (first chunk's length should be 13, is {:})\n", len);
   };
-  if(!checkCRC(len)){
+  if (!checkCRC(len)) {
     return -1;
   };
   uint32_t type = ptoh(in.pop<uint32_t>());
-  bool bad_header = false;
   if (type != chunk_type["IHDR"]) {
     dprf("ERR: First chunk is not IHDR, (got {:8x})\n", type);
     tainted = true;
     return -1;
   }
-  ihdr
-  ihdr.width = ptoh(in.());
+  ihdr = in.pop<png::ihdr_t>();
+  ihdr.width = ptoh(ihdr.width);
   dprf("Width: {:d}, ", ihdr.width);
-  ihdr.height = ptoh(in.sbumpc());
+  ihdr.height = ptoh(ihdr.height);
   dprf("Height: {:d}, ", ihdr.height);
-  ihdr.bit_depth = in.sbumpc();
   dprf("Bit depth: {:d}, ", ihdr.bit_depth);
-  ihdr.color_type = in.sbumpc();
   dprf("Color type: {:d}\n", ihdr.color_type);
   if (!validDepthColor()) {
     dprf("WARN: invalid color-type and bit-depth combonation");
     tainted = true;
   }
-  ihdr.compression_method = in.sbumpc();
   if (ihdr.compression_method == 0) {
     dprf("Compression method: 0: DEFLATE\n");
   } else {
     dprf("ERR: Unknown compression method {:}\n", ihdr.compression_method);
     tainted = true;
   }
-  ihdr.filter_method = in.sbumpc();
   if (ihdr.filter_method == 0) {
     dprf("Filter method: 0: Adaptive filtering with five basic filter types\n");
   } else {
     dprf("ERR: Unknown filter method {:}\n", ihdr.filter_method);
     tainted = true;
   }
-  ihdr.interlace_method = in.sbumpc();
   if (ihdr.interlace_method == 0) {
     dprf("Interlace method: 0: No interlace\n");
   } else if (ihdr.interlace_method == 1) {
@@ -88,10 +85,7 @@ int png::parseHead() {
     dprf("ERR: Unknown filter method {:}\n", ihdr.interlace_method);
     tainted = true;
   }
-  if (!checkCRC()) {
-    tainted = true;
-  }
-  image_size = ihdr.width * ihdr.height;
+  image_size = static_cast<long>(ihdr.width) * static_cast<long>(ihdr.height);
   bpp = ihdr.bit_depth;
   if (ihdr.color_type == 2) {
     bpp *= 3;
@@ -112,10 +106,11 @@ int png::parseHead() {
 }
 
 bool png::checkCRC(uint32_t len) {
-  std::vector<uint8_t> buf(len + 8/*crc and chunk type are 4 bytes each*/);
+  std::vector<uint8_t> buf(len + 8 /*crc and chunk type are 4 bytes each*/);
   in.peek<uint8_t>(buf);
-  uint32_t calc = crc32<uint8_t>(std::span(buf).subspan(0,len + 4));
-  if (calculated == crc) {
+  uint32_t calc = crc32<uint8_t>(std::span(buf).subspan(0, len + 4));
+  uint32_t crc = *reinterpret_cast<uint32_t *>(buf[len + 3]);
+  if (crc == calc) {
     return true;
   } else {
     dprf("CRC check failed ToT\ncalculted\t{:}\nexpected\t{:}\n", calc, crc);
@@ -129,16 +124,10 @@ int png::init() {
   image_size = 10;
   return 0;
 }
-
 int png::decode() {
-  dprf("Decoding PNG\n");
-  while (in.in_avail() > 0) {
-    uint32_t length;
-    in.sgetn(reinterpret_cast<char *>(&length), sizeof(length));
-    length = ptoh(length);
-    checksum = ~0;
-    std::array<char, 4> buf;
-    in.sgetn(buf.data(), buf.size());
+  uint32_t length = ptoh(in.pop<uint32_t>());
+  uint32_t buf = ptoh(in.pop<uint32_t>());
+  while (in.len() > 0) {
     if (buf == chunk_type["PLTE"]) {
       parsePalette(length);
     } else if (buf == chunk_type["IDAT"]) {
@@ -182,12 +171,10 @@ int png::decode() {
     } else if (buf == chunk_type["tIME"]) {
       time(length);
     } else {
-      dprf("WARN: unkown chunk (type: {:}{:}{:}{:}, length {:})\n", buf[0],
-           buf[1], buf[2], buf[3], length);
+      dprf("WARN: unkown chunk (type: {:8x}, length {:})\n", buf, length);
       notImplYet(length);
     }
-    checkCRC();
-  };
+  }
   return 0;
 }
 
@@ -199,8 +186,8 @@ int png::parsePalette(uint32_t length) {
     return -1;
   }
   palette.resize(length / 3);
-  for (int i = 0; (i * 3) < length; i++) {
-    in.sgetn(reinterpret_cast<char *>(&palette[i]), sizeof(palette[i]));
+  for (uint i = 0; (i * 3) < length; i++) {
+    in.read<rgb888>(palette);
   };
   return 0;
 };
@@ -208,21 +195,17 @@ int png::decodeImageData(uint32_t length) {
   size_t bytes_avail = length;
   size_t inlen = 2 * getpagesize();
   size_t outlen = 2 * getpagesize();
-  std::vector<std::byte> bufin(inlen);
-  std::vector<std::byte> bufout(outlen);
-  z_stream zstream = {
-      .next_in = reinterpret_cast<uint8_t *>(bufin.data()),
-      .avail_in = 0,
-      .next_out = reinterpret_cast<uint8_t *>(bufout.data()),
-      .avail_out = static_cast<unsigned int>(outlen),
-      .zalloc = Z_NULL,
-      .zfree = Z_NULL,
-      .opaque = Z_NULL,
-  };
+  std::vector<uint8_t> bufin(inlen);
+  std::vector<uint8_t> bufout(outlen);
+  z_stream zstream;
+  zstream.next_in = bufin.data();
+  zstream.avail_in = 0;
+  zstream.next_out = bufout.data();
+  zstream.avail_out = static_cast<unsigned int>(outlen);
+  zstream.zalloc = Z_NULL, zstream.zfree = Z_NULL, zstream.opaque = Z_NULL,
   zstream.avail_in = bufin.size();
   bytes_avail -= zstream.avail_in;
   inflateInit2(&zstream, 0);
-  int cnt = 1;
   int ret = inflate(&zstream, Z_SYNC_FLUSH);
   while ((ret >= 0) && (ret != Z_STREAM_END)) {
     //                           avail_out
@@ -230,27 +213,22 @@ int png::decodeImageData(uint32_t length) {
     // [DDDDDDDDDDDDDDDDDDDDDDDDDD       ]
     // [ccccccccccccccccccccccDDDD       ]
     // [DDDD
-    int consumed = filterline(reinterpret_cast<uint8_t *>(bufout.data()),
-                              outlen - zstream.avail_out);
+    int consumed = filterline(bufout.data(), outlen - zstream.avail_out);
     int leftoverlen = outlen - zstream.avail_out - consumed;
     memmove(bufout.data(), zstream.next_out - leftoverlen, leftoverlen);
     zstream.avail_out += consumed;
-    zstream.next_out = reinterpret_cast<uint8_t *>(bufout.data()) + leftoverlen;
+    zstream.next_out = bufout.data() + leftoverlen;
     if (zstream.avail_in == 0) {
       //   dprf("{:} of {:} done{:}\n", zstream.total_in,length,bytes_avail);
-      zstream.avail_in =
-          in.sgetn(reinterpret_cast<char *>(bufin.data()), bytes_avail);
+      zstream.avail_in = in.read<uint8_t>(std::span<uint8_t>(
+          bufin.data(), std::min(bufin.size(), bytes_avail)));
       bytes_avail -= zstream.avail_in;
-      zstream.next_in = reinterpret_cast<uint8_t *>(bufin.data());
+      zstream.next_in = bufin.data();
     };
     ret = inflate(&zstream, Z_SYNC_FLUSH);
   }
   filterline(reinterpret_cast<uint8_t *>(bufout.data()),
              outlen - zstream.avail_out);
-  // dprf("{:} of {:} done\n", zstream.total_in,length);
-  //  dprf("Zstream ended with return code {:}, total bytes read {:}, length
-  //  {:}\n",
-  //     zlib_return_string(ret),zstream.total_in,length);
   inflateEnd(&zstream);
   return 0;
 }
@@ -270,7 +248,7 @@ int png::decodeImageData(uint32_t length) {
   };
 }
 
-int png::filterline(uint8_t *buf, int length) {
+int png::filterline(const uint8_t *buf, int length) {
   int line = 0;
   int prev_offset = (bpp <= 8) ? 1 : bpp / 8;
   while (line + scanline_mem <= length) {
@@ -324,31 +302,17 @@ int png::filterline(uint8_t *buf, int length) {
   return line;
 }
 
-template <typename byte> int png::putData(byte *buf, size_t num_bytes) {
-  if (num_bytes > avail_out) {
-    return -1;
-  }
-  // memcpy(next_out, reinterpret_cast<char *>(buf), num_bytes);
-  // next_out += num_bytes;
-  avail_out -= num_bytes;
-  return num_bytes;
-}
-
 int png::writeLine() {
   if (ihdr.color_type == 3) {
     if (ihdr.bit_depth < 8) {
       uint8_t bmask = (1 << (ihdr.bit_depth)) - 1;
       for (uint32_t i = 8; i < ihdr.width * bpp + 8; i += bpp) {
         uint8_t pindex = std::rotl(curline[i / 8], i + ihdr.bit_depth) & bmask;
-        putData(&(palette[pindex].red), 1);
-        putData(&(palette[pindex].green), 1);
-        putData(&(palette[pindex].blue), 1);
+        image.push_back(palette[pindex]);
       }
     } else if (ihdr.bit_depth == 8) {
-      for (int i = 1; i < ihdr.width + 1; i++) {
-        putData(&(palette[curline[i]].red), 1);
-        putData(&(palette[curline[i]].green), 1);
-        putData(&(palette[curline[i]].blue), 1);
+      for (uint i = 1; i < ihdr.width + 1; i++) {
+        image.push_back(palette[curline[i]]);
       }
     } else {
       dprf("ERR: Invalid bit depth");
@@ -356,67 +320,50 @@ int png::writeLine() {
   } else if (ihdr.color_type == 2) {
     if (ihdr.bit_depth == 8) {
       for (int i = 1; i < scanline_mem; i += 3) {
-        putData(&(curline[i]), 3);
+        image.emplace_back(*reinterpret_cast<rgb888 *>(&curline[i]));
       }
     } else if (ihdr.bit_depth == 16) {
-      for (int i = 1; i < ihdr.width * 6 + 1; i += 6) {
-        putData(&(curline[i]), 1);
-        putData(&(curline[i + 2]), 1);
-        putData(&(curline[i + 4]), 1);
+      for (uint i = 1; i < ihdr.width * 6 + 1; i += 6) {
+        image.emplace_back(curline[i], curline[i + 2], curline[i + 4]);
       }
     }
   } else if (ihdr.color_type == 0) {
     if (ihdr.bit_depth < 8) {
-      int offset = 0;
       uint8_t bmask = (1 << (ihdr.bit_depth)) - 1;
-      for (int col = 8; col < ihdr.width * ihdr.bit_depth + 8;
+      for (uint col = 8; col < ihdr.width * ihdr.bit_depth + 8;
            col += ihdr.bit_depth) {
         uint8_t val = bitscale<uint8_t>(
             std::rotl(curline[col / 8], col + ihdr.bit_depth) & bmask,
             ihdr.bit_depth, 8);
-        putData(&val, 1);
-        putData(&val, 1);
-        putData(&val, 1);
+        image.emplace_back(val, val, val);
       }
     } else if (ihdr.bit_depth == 8) {
-      for (int i = 1; i < ihdr.width + 1; i++) {
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
+      for (uint i = 1; i < ihdr.width + 1; i++) {
+        image.emplace_back(curline[i], curline[i], curline[i]);
       }
     } else if (ihdr.bit_depth == 16) {
-      for (int i = 1; i < ihdr.width * 2 + 1; i += 2) {
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
+      for (uint i = 1; i < ihdr.width * 2 + 1; i += 2) {
+        image.emplace_back(curline[i], curline[i], curline[i]);
       }
     }
   } else if (ihdr.color_type == 4) {
     if (ihdr.bit_depth == 8) {
-      for (int i = 1; i < ihdr.width * 2 + 1; i += 2) {
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
+      for (uint i = 1; i < ihdr.width * 2 + 1; i += 2) {
+        image.emplace_back(curline[i], curline[i], curline[i]);
       }
     } else if (ihdr.bit_depth == 16) {
-      for (int i = 1; i < ihdr.width * 4 + 1; i += 4) {
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
-        putData(&(curline[i]), 1);
+      for (uint i = 1; i < ihdr.width * 4 + 1; i += 4) {
+        image.emplace_back(curline[i], curline[i], curline[i]);
       }
     }
   } else if (ihdr.color_type == 6) {
     if (ihdr.bit_depth == 8) {
-      for (int i = 1; i < ihdr.width * 4 + 1; i += 4) {
-        putData(&(curline[i]), 1);
-        putData(&(curline[i + 1]), 1);
-        putData(&(curline[i + 2]), 1);
+      for (uint i = 1; i < ihdr.width * 4 + 1; i += 4) {
+        image.emplace_back(curline[i], curline[i + 1], curline[i + 2]);
       }
     } else if (ihdr.bit_depth == 16) {
-      for (int i = 1; i < ihdr.width * 8 + 1; i += 8) {
-        putData(&(curline[i]), 1);
-        putData(&(curline[i + 2]), 1);
-        putData(&(curline[i + 4]), 1);
+      for (uint i = 1; i < ihdr.width * 8 + 1; i += 8) {
+        image.emplace_back(curline[i], curline[i + 2], curline[i + 4]);
       }
     }
   }
@@ -424,9 +371,9 @@ int png::writeLine() {
 }
 
 void png::notImplYet(int len) {
-  std::vector<std::byte> dummybuf;
-  dummybuf.resize(len);
-  in.mmove(dummybuf);
+  std::vector<uint8_t> dummybuf;
+  dummybuf.resize(len + 4);
+  in.read<uint8_t>(dummybuf);
   return;
 }
 int png::trns(int length) {
@@ -499,24 +446,25 @@ int png::time(int length) {
 }
 
 extern frame_buffer fb;
-
-int png::display(int scroll) {
-  for (int col = 0; col < fb.vinfo.yres; col++) {
-    for (int row = 0; row < fb.vinfo.xres; row++) {
-      if (0 < row + scroll && row + scroll < height) {
-        fb.setPixel(fb.vinfo.yres - 1 - col, row, at(row + scroll, col));
+int display(std::span<rgb888> image, int scroll) {
+  for (uint col = 0; col < fb.vinfo.yres; col++) {
+    for (uint row = 0; row < fb.vinfo.xres; row++) {
+      if (0 < row + scroll && (row + scroll * 420 + col) < image.size()) {
+        fb.setPixel(fb.vinfo.yres - 1 - col, row,
+                    image[(row + scroll) * 420 + col]);
       }
     }
   }
   return 0;
 }
 
-int image::scale(double fctr, std::span<rgb888> kernel, int w, int h) {
+int scale(double fctr, std::span<rgb888> image, size_t w, size_t h,
+          std::span<rgb888> kernel) {
   double scl = 1 / fctr - 0.1;
-  for (int r = 0; r < height; r++) {
-    for (int c = 0; c < width; c++) {
-      long int i = static_cast<int>(c * scl) + w * static_cast<int>(r * scl);
-      at(r, c) = kernel[i];
+  for (uint r = 0; r < h; r++) {
+    for (uint c = 0; c < w; c++) {
+      long int i = static_cast<int>(c * scl) + 480 * static_cast<int>(r * scl);
+      image[r * w + c] = kernel[i];
     }
   }
   return 0;

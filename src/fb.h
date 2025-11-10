@@ -2,7 +2,7 @@
 // see <linux/fb.h>
 class frame_buffer {
 public:
-  bool constexpr inBounds(int row, int col) {
+  bool constexpr inBounds(uint row, uint col) {
     return (0 <= row && row < vinfo.yres && 0 <= col && col < vinfo.xres);
   }
   fb_var_screeninfo vinfo;
@@ -10,7 +10,8 @@ public:
   void printInfo();
   void setPixel(int row, int col, rgb888 color) noexcept;
   rgb888 getPixel(int row, int col);
-  frame_buffer(std::filesystem::path fb_device = "/dev/fb0");
+  frame_buffer() = delete;
+  explicit frame_buffer(std::filesystem::path fb_device = "/dev/fb0");
   ~frame_buffer();
 
 private:

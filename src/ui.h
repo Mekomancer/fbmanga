@@ -5,7 +5,6 @@ public:
   void init(); // call before using
   void cleanup();
   size_t choose(std::span<std::string> options);
-  size_t choose(std::span<std::pair<std::string, std::string>> options);
 
 private:
   bool initialized = false;

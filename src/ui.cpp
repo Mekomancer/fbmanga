@@ -1,8 +1,6 @@
 #include "ui.h"
 #include "util.h"
 
-template <typename cat, int ct> void foo() { return (cat)ct; }
-
 void text_user_interface::init() {
   if (initialized) {
     dprf("WARN: tui already initialized");
@@ -17,19 +15,10 @@ void text_user_interface::init() {
   initialized = true;
 }
 
-size_t text_user_interface::choose(
-    std::span<std::pair<std::string, std::string>> opts) {
-  if (!initialized) {
-#ifdef NDEBUG
-    dprf("Warn: tui not initialized, auto choosing {:}", opts[0]);
-#endif
-    return 0;
-  } else {
-  }
-  return -1;
-}
-
 size_t text_user_interface::choose(std::span<std::string> opts) {
+  for (std::string opt : opts) {
+    std::print("{}", opts);
+  }
   if (!initialized) {
 #ifdef NDEBUG
     dprf("Warn: tui not initialized, auto choosing {:}", opts[0]);
