@@ -53,20 +53,14 @@ public:
   template <typename t = uint8_t> size_t append(std::span<t> buf);
   size_t size();
   size_t len();
-  size_t resize();
+  size_t resize(size_t);
   bool constexpr is_wrapped() {
-  if (end < begin) {
-    return true;
-  } else if (begin == end) {
-    return false;
-  } else if (end > begin) {
-    return false;
-  } else {
-    return true;
+    if (end < begin) {
+      return true;
+    } else {
+      return false;
+    }
   }
-}
-  ring_buf();
-  ~ring_buf();
   ring_buf &operator=(ring_buf &other) = delete;
 
 private:
@@ -79,8 +73,7 @@ template <typename t> size_t ring_buf::peek(std::span<t> bufffer) {
   std::span<std::byte> buf = std::as_writable_bytes(bufffer);
   size_t num_bytes = std::min(buf.size(), len());
   if (!is_wrapped()) {
-    buf.subspan(0, num_bytes) = std::span<std::byte>(
-        reinterpret_cast<std::byte *>(&data[begin]), num_bytes);
+    std::memcpy(buf.data(), &data[begin], num_bytes);
   } else {
     size_t begin_bytes = std::min(num_bytes, (data.size() - (begin + 1)));
     buf.subspan(0, begin_bytes) = std::span<std::byte>(
@@ -90,7 +83,7 @@ template <typename t> size_t ring_buf::peek(std::span<t> bufffer) {
       buf.subspan(begin_bytes, end_bytes) = std::span<std::byte>(
           reinterpret_cast<std::byte *>(&data[0]), end_bytes);
       if (end_bytes + begin_bytes != num_bytes) {
-        dprf("ERR: ring_buf::peek(), mark couldn't count properly");
+        dprf("ERR: ring_buf::peek()");
       }
     }
   }
@@ -104,9 +97,12 @@ template <typename t> size_t ring_buf::read(std::span<t> buf) {
 }
 
 template <typename t> size_t ring_buf::append(std::span<t> buf) {
-  size_t num_bytes = std::min(buf.size(), data.size() - len());
+  size_t num_bytes = buf.size();
+  if (len() + num_bytes > size()) {
+    resize(len() + num_bytes);
+  }
   if (end + num_bytes < data.size()) {
-    std::memcpy(data.data(), buf.data(), num_bytes);
+    std::memcpy(&data[end], buf.data(), num_bytes);
   } else {
     size_t begin_bytes = std::min(num_bytes, (data.size() - (end + 1)));
     if (begin_bytes > 0) {
@@ -116,7 +112,7 @@ template <typename t> size_t ring_buf::append(std::span<t> buf) {
       size_t end_bytes = std::min(num_bytes - begin_bytes, end);
       std::memcpy(data.data(), &buf[begin_bytes], end_bytes);
       if (end_bytes + begin_bytes != num_bytes) {
-        dprf("ERR: ring_buf::peek(), mark couldn't count properly");
+        dprf("ERR: ring_buf::peek()");
       }
     }
   }

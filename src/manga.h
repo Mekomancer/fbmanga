@@ -2,19 +2,19 @@ class mangadex {
 public:
   mangadex();
   bool checkup(); // returns true if the ping endpoint works
-  std::vector<std::string> getScanlationGroups(std::string chap_id);
   int setCreds(std::string_view username, std::string_view password,
                std::string_view id, std::string_view secret);
-  std::pair<std::vector<std::string>, std::vector<std::string>>
-  getChapters(std::string_view manga_id);
+  struct chapter_info {
+    std::string id;
+    std::string desc;
+  };
+  std::vector<chapter_info> getChapters(std::string_view manga_id);
   std::vector<std::string> getMangaId(std::string_view title = "acchi kocchi");
-  /*fight me, i dare u. i own this repo, i make the decsions.*/
-  std::vector<int> downloadChapter(std::string_view manga);
   std::vector<std::string> getImgUrls(std::string_view chapter);
-  int initTokens();             // call setCreds before calling this func;
-  std::string getAccessToken(); // automatically refreshes token if expired;
-  const time_t access_token_lifetime = 60 * 15; // 15 mins, as of 09/03/25
-
+  void downloadImg(std::string_view img_url, ring_buf *buf);
+  int initTokens();
+  std::string getAccessToken();
+  static constexpr time_t access_token_lifetime = 60 * 15; // as of 09/03/25
 private:
   void queryAdd(std::string_view param, std::string_view val);
   void clearQuery();

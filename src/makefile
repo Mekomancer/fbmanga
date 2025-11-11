@@ -2,7 +2,7 @@
 .PHONY : run build clean grind debug tidy check
 
 runcmd = ../fbmanga ../dat/png/*
-nin = ninja -j1 -C ..
+nin = ninja -j2 -C ..
 run : build
 	$(runcmd)
 
@@ -13,7 +13,7 @@ clean :
 	$(nin) clean
 
 grind : build
-	valgrind $(runcmd)
+	valgrind -v -v -v $(runcmd) 2> log.grind
 
 debug : build
 	gdbtui --args $(runcmd)

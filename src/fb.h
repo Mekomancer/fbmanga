@@ -1,5 +1,6 @@
-#include "util.h"
-// see <linux/fb.h>
+#include <linux/fb.h>
+#include <filesystem>
+
 class frame_buffer {
 public:
   bool constexpr inBounds(uint row, uint col) {

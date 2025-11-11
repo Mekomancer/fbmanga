@@ -2,17 +2,15 @@ cmake_minimum_required(VERSION 3.31)#abitrary
 
 set(CMAKE_CXX_STANDARD 26)# we going crazy here, its not even 2026 yet
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
-#set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE iwyu)
-#set(CMAKE_CXX_CLANG_TIDY clang-tidy)
-#set(CMAKE_CXX_CPPCHECK cppcheck)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE iwyu)
 set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
-set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) #for clangd
 set(CMAKE_PCH_WARN_INVALID ON)
 set(CMAKE_BINARY_DIR ./build/)
 set(CMAKE_SOURCE_DIR ./src/)
-set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53' -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53' -Wall")
 #needed for __crc32b() builtin-------^^^^^^^^^^^^^^^^^^
 
 find_package(RapidJSON)
@@ -51,6 +49,7 @@ target_precompile_headers(fbmanga
     <span>
     <string>
     <vector>
+    <numeric>
 #System
     <arm_acle.h>
     <fcntl.h>
@@ -64,6 +63,8 @@ target_precompile_headers(fbmanga
     <curses.h>
     <rapidjson/document.h>
     <zlib.h>
+
+    "src/util.h"
 )
 
 target_link_libraries(fbmanga curl ncurses z)

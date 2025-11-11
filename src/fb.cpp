@@ -1,4 +1,7 @@
 #include "fb.h"
+#include <sys/ioctl.h>
+#include <filesystem>
+
 namespace fs = std::filesystem;
 // this code was meant for a 565 screen, it may not work for a 888 screen
 frame_buffer::frame_buffer(fs::path fb_dev) {

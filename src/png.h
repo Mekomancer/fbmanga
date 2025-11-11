@@ -1,10 +1,8 @@
 #include "fb.h"
-#include "util.h"
 
-int display(double factor, std::span<rgb888> image, int w, int h, int scroll);
 class png {
 public:
-  struct ihdr_t {
+  struct __attribute__ ((__packed__)) ihdr_t {
     uint32_t width;
     uint32_t height;
     uint8_t bit_depth;
@@ -13,6 +11,7 @@ public:
     uint8_t filter_method;
     uint8_t interlace_method;
   } ihdr;
+  static_assert(sizeof(ihdr_t)==13);
   uint64_t image_size = 0;
   ring_buf in;
   std::vector<rgb888> image;

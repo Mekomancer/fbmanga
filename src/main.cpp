@@ -1,10 +1,12 @@
+#include "main.h"
 #include "manga.h"
 #include "png.h"
 #include "ui.h"
-#include "util.h"
-frame_buffer fb();
+
+frame_buffer fb("/dev/fb0");
 configuration conf;
 text_user_interface tui;
+
 void init() {
   std::setlocale(LC_ALL, "");
 #ifdef NDEBUG
@@ -31,25 +33,29 @@ int main(int argn, char *argv[]) {
   conf.parseArgs();
   init();
   mangadex md;
-  md.checkup();
+  if (!md.checkup()) {
+    return -1;
+  }
   std::vector<std::string> manga_ids = md.getMangaId();
   int manga_choice = tui.choose(manga_ids);
-  std::pair<std::vector<std::string>, std::vector<std::string>> chaps =
+  std::vector<mangadex::chapter_info> chaps =
       md.getChapters(manga_ids[manga_choice]);
-  int chapter_choice = tui.choose(chaps.second);
-  std::vector<std::string> img_urls =
-      md.getImgUrls(chaps.first[chapter_choice]);
+  std::vector<std::string> choices(chaps.size());
+  std::transform(chaps.begin(), chaps.end(), choices.begin(),
+                 [](mangadex::chapter_info info) { return info.desc; });
+  int chapter_choice = tui.choose(choices);
+  std::vector<std::string> img_urls = md.getImgUrls(chaps[chapter_choice].id);
   std::vector<png> pngs(img_urls.size());
   for (uint i = 0; i < pngs.size(); ++i) {
+    md.downloadImg(img_urls[i], &pngs[i].in);
     pngs[i].init();
     pngs[i].parseHead();
     std::vector<rgb888> obuf;
     obuf.resize(pngs[i].ihdr.width * pngs[i].ihdr.height);
     pngs[i].decode();
-    double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
+    //    double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
     for (uint line = 0; line < pngs[i].ihdr.height; line++) {
-      display(factor, pngs[i].image, pngs[i].ihdr.width, pngs[i].ihdr.height,
-              line);
+      display(pngs[i].image, line);
 #ifdef NDEBUG
       switch (getch()) {
       case KEY_UP:
@@ -63,5 +69,17 @@ int main(int argn, char *argv[]) {
     };
   }
   curl_global_cleanup();
+  return 0;
+}
+
+int display(std::span<rgb888> image, int scroll) {
+  for (uint col = 0; col < fb.vinfo.yres; col++) {
+    for (uint row = 0; row < fb.vinfo.xres; row++) {
+      if (0 < row + scroll && (row + scroll * 420 + col) < image.size()) {
+        fb.setPixel(fb.vinfo.yres - 1 - col, row,
+                    image[(row + scroll) * 420 + col]);
+      }
+    }
+  }
   return 0;
 }

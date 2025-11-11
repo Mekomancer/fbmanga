@@ -1,20 +1,15 @@
 #include "png.h"
-#include "util.h"
-
-template <typename t>
-  requires(sizeof(t) == 1)
-uint32_t crc32(std::span<t> dat) {
-  uint32_t ret = ~0;
+uint32_t crc32(std::span<uint8_t> dat) {
 #if __ARM_FEATURE_CRC32 == 1
   // use intrisics
-  for (uint i = 0; i < dat.size(); i++) {
-    ret = __crc32b(ret, static_cast<char>(dat[i]));
-  }
+    return ~std::accumulate(dat.begin(),dat.end(),~(0ul),
+        [](uint32_t checksum, uint8_t val){
+          return __crc32b(checksum, val);
+        });
 #else
   // use zlibs crc
-  crc32_z(uint32_t ret, dat.data(), dat.length());
+  return crc32_z(uint32_t ret, dat.data(), dat.length());
 #endif
-  return ~ret;
 }
 
 bool png::validDepthColor() {
@@ -46,7 +41,8 @@ int png::parseHead() {
     dprf("ERR: Bad IHDR (first chunk's length should be 13, is {:})\n", len);
   };
   if (!checkCRC(len)) {
-    return -1;
+    ;
+    tainted = true;
   };
   uint32_t type = ptoh(in.pop<uint32_t>());
   if (type != chunk_type["IHDR"]) {
@@ -56,7 +52,7 @@ int png::parseHead() {
   }
   ihdr = in.pop<png::ihdr_t>();
   ihdr.width = ptoh(ihdr.width);
-  dprf("Width: {:d}, ", ihdr.width);
+  dprf("Width: {:d},", ihdr.width);
   ihdr.height = ptoh(ihdr.height);
   dprf("Height: {:d}, ", ihdr.height);
   dprf("Bit depth: {:d}, ", ihdr.bit_depth);
@@ -102,18 +98,19 @@ int png::parseHead() {
   }
   curline.resize(scanline_mem);
   prevline.resize(scanline_mem);
+  in.pop<uint32_t>(); // crc
   return 0;
 }
 
 bool png::checkCRC(uint32_t len) {
   std::vector<uint8_t> buf(len + 8 /*crc and chunk type are 4 bytes each*/);
   in.peek<uint8_t>(buf);
-  uint32_t calc = crc32<uint8_t>(std::span(buf).subspan(0, len + 4));
-  uint32_t crc = *reinterpret_cast<uint32_t *>(buf[len + 3]);
+  uint32_t calc = crc32(std::span(buf).subspan(0, len + 4));
+  uint32_t crc = ptoh(*reinterpret_cast<uint32_t *>(&buf[len + 4]));
   if (crc == calc) {
     return true;
   } else {
-    dprf("CRC check failed ToT\ncalculted\t{:}\nexpected\t{:}\n", calc, crc);
+    dprf("CRC check failed ToT\ncalculted\t{:8x}\nexpected\t{:8x}\n", calc, crc);
     return false;
   }
   return false;
@@ -126,7 +123,8 @@ int png::init() {
 }
 int png::decode() {
   uint32_t length = ptoh(in.pop<uint32_t>());
-  uint32_t buf = ptoh(in.pop<uint32_t>());
+  uint32_t buf;
+  in.peek(std::span(reinterpret_cast<uint8_t *>(&buf), 4));
   while (in.len() > 0) {
     if (buf == chunk_type["PLTE"]) {
       parsePalette(length);
@@ -171,7 +169,9 @@ int png::decode() {
     } else if (buf == chunk_type["tIME"]) {
       time(length);
     } else {
-      dprf("WARN: unkown chunk (type: {:8x}, length {:})\n", buf, length);
+      char tmp[] = "err:";//posion so i can tell if not overwritten
+      std::memcpy(tmp,&buf,4);
+      dprf("WARN: unkown chunk (type: {:s}, length {:})\n", tmp, length);
       notImplYet(length);
     }
   }
@@ -372,7 +372,7 @@ int png::writeLine() {
 
 void png::notImplYet(int len) {
   std::vector<uint8_t> dummybuf;
-  dummybuf.resize(len + 4);
+  dummybuf.resize(len + 8);
   in.read<uint8_t>(dummybuf);
   return;
 }
@@ -442,19 +442,6 @@ int png::exif(int length) {
 }
 int png::time(int length) {
   notImplYet(length);
-  return 0;
-}
-
-extern frame_buffer fb;
-int display(std::span<rgb888> image, int scroll) {
-  for (uint col = 0; col < fb.vinfo.yres; col++) {
-    for (uint row = 0; row < fb.vinfo.xres; row++) {
-      if (0 < row + scroll && (row + scroll * 420 + col) < image.size()) {
-        fb.setPixel(fb.vinfo.yres - 1 - col, row,
-                    image[(row + scroll) * 420 + col]);
-      }
-    }
-  }
   return 0;
 }
 

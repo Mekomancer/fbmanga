@@ -1,4 +1,17 @@
-#include "util.h"
+size_t ring_buf::resize(size_t newlen) {
+  if (newlen < data.size()) {
+    return data.size();
+  };
+  size_t oldsize = data.size();
+  data.resize(newlen + getpagesize());
+  if (is_wrapped()) {
+    std::memcpy(&data[oldsize], data.data(), end);
+    end = oldsize + end;
+  }
+  return data.size();
+}
+
+size_t ring_buf::size() { return data.size(); }
 
 size_t ring_buf::len() {
   if (is_wrapped()) {
@@ -16,7 +29,7 @@ void configuration::indexArgs(int argn, char *argv[]) {
 };
 
 int configuration::parseArgs() {
-  for (int i = 0; i < args.size(); i++) {
+  for (uint i = 0; i < args.size(); i++) {
     std::string arg = args[i];
     if (arg == "-h" || arg == "--help") {
       printHelp();

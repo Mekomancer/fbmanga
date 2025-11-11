@@ -1,5 +1,4 @@
 #include "ui.h"
-#include "util.h"
 
 void text_user_interface::init() {
   if (initialized) {
@@ -17,7 +16,7 @@ void text_user_interface::init() {
 
 size_t text_user_interface::choose(std::span<std::string> opts) {
   for (std::string opt : opts) {
-    std::print("{}", opts);
+    std::print("", opt);
   }
   if (!initialized) {
 #ifdef NDEBUG
