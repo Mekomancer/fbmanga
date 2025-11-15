@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.2)#nice
 set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
-set(CMAKE_CXX_COMPILER_IMPORT_STD 23)
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_COMPILER_IMPORT_STD 23 26)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
@@ -35,14 +35,8 @@ FetchContent_MakeAvailable(std)
 
 add_executable(fbmanga
   src/main.cpp
-  src/manga.cpp
-  src/ui.cpp
 )
 add_dependencies(fbmanga std.compat)
-target_precompile_headers(fbmanga
-  PRIVATE
-  src/debug.h
-)
 target_sources(fbmanga
   PRIVATE
   FILE_SET CXX_MODULES
@@ -52,6 +46,9 @@ target_sources(fbmanga
   src/pngutil.cppm
   src/fb.cppm
   src/types.cppm
+  src/ui.cppm
+  src/config.cppm
+  src/manga.cppm
 )
 
 

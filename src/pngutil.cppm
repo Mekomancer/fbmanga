@@ -1,9 +1,33 @@
 module;
+#include "debug.h"
 #include <unistd.h>
 export module png.util;
 import std;
 import types;
 import std.compat;
+/*png (network) to host byte order*/
+export template <typename T> [[nodiscard]] constexpr T ptoh(T val) noexcept {
+  using enum std::endian;
+  if constexpr (native == big) {
+    return val;
+  } else if (native == little) {
+    return std::byteswap(val);
+  } else {
+    static_assert((native == little) || (native == big),
+                  "Mixed-endian not supported");
+  }
+}
+
+/*host to png (network) byte order*/
+export template <typename T> [[nodiscard]] constexpr T htop(T val) noexcept {
+  return ptoh(val);
+}
+static_assert(htop(ptoh(1)) == 1);
+
+export template <typename T>
+constexpr T bitscale(T val, int cur, int target) {
+  return (((2 * val * ((1 << target) - 1)) / ((1 << cur) - 1)) + 1) / 2;
+}
 export class ring_buf {
 public:
   template <typename t = uint8_t> size_t peek(std::span<t> buf);

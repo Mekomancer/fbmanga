@@ -1,10 +1,14 @@
 import fb;
-import manga;
-import ui;
-import debug;
+import manga.dex;
+import ui.tui;
+#include "debug.h"
+#include <curl/curl.h>
+#include <clocale>
 import config;
+import types;
+import std;
+import png;
 frame_buffer fb("/dev/fb0");
-configuration conf;
 text_user_interface tui;
 
 void init() {

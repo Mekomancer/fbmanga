@@ -6,12 +6,13 @@ module;
 #include "debug.h"
 export module fb;
 import std;
-import std.compat;
 import types;
-extern conf;
-class frame_buffer {
+import png.util;
+import config;
+
+export class frame_buffer {
 public:
-  bool constexpr inBounds(uint row, uint col) {
+  bool constexpr inBounds(uint32_t row, uint32_t col) {
     return (0 <= row && row < vinfo.yres && 0 <= col && col < vinfo.xres);
   }
   fb_var_screeninfo vinfo;

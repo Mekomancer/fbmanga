@@ -1,19 +1,21 @@
+#pragma once
+import config;
 #define dprf(...)                                                              \
   std::print(__VA_ARGS__);                                                     \
-  fflush(0);
+  std::fflush(0);
 #define err(...)                                                               \
-  if (conf::vebosity >= cofiguration::verboseness::err) {                      \
-    dprf("!ERR:"__VA_ARGS__);                                                  \
+  if (conf.vebosity >= configuration::verboseness::error) {                      \
+    dprf("!ERR:" __VA_ARGS__);                                                  \
   }
 #define warn(...)                                                              \
-  if (conf::vebosity >= cofiguration::verboseness::warn) {                     \
-    dprf("WARN:"__VA_ARGS__);                                                  \
+  if (conf.vebosity >= configuration::verboseness::warn) {                     \
+    dprf("WARN:" __VA_ARGS__);                                                  \
   }
 #define info(...)                                                              \
-  if (conf::vebosity >= cofiguration::verboseness::info) {                     \
-    dprf("INFO:"__VA_ARGS__);                                                  \
+  if (conf.vebosity >= configuration::verboseness::info) {                     \
+    dprf("INFO:" __VA_ARGS__);                                                  \
   }
 #define dump(...)                                                              \
-  if (conf::vebosity >= cofiguration::verboseness::dump) {                     \
-    dprf("INFO:"__VA_ARGS__);                                                  \
+  if (conf.vebosity >= configuration::verboseness::dump) {                     \
+    dprf("INFO:" __VA_ARGS__);                                                  \
   }

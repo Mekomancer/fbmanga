@@ -1,6 +1,14 @@
+module;
+#include <rapidjson/document.h>
+#include <curl/curl.h>
+#include "debug.h"
+export module manga.dex;
+import config;
 import std;
-import png:util;
-class mangadex {
+import png.util;
+using namespace std::literals;
+namespace rj = rapidjson;
+export class mangadex {
 public:
   mangadex();
   bool checkup(); // returns true if the ping endpoint works

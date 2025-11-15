@@ -1,35 +1,12 @@
 module;
 import std;
-import std.compat;
 #include "debug.h"
-#include <cstdint>
-import png.util;
+#include <arm_acle.h>
+#include <zlib.h>
 export module png;
+import config;
+import png.util;
 import types;
-/*png (network) to host byte order*/
-template <typename T> [[nodiscard]] constexpr T ptoh(T val) noexcept {
-  using enum std::endian;
-  if constexpr (native == big) {
-    return val;
-  } else if (native == little) {
-    return std::byteswap(val);
-  } else {
-    static_assert((native == little) || (native == big),
-                  "Mixed-endian not supported");
-  }
-}
-
-/*host to png (network) byte order*/
-template <typename T> [[nodiscard]] constexpr T htop(T val) noexcept {
-  return ptoh(val);
-}
-static_assert(htop(ptoh(1)) == 1);
-
-template <typename T>
-constexpr T bitscale(T val, int cur, int target) {
-  return (((2 * val * ((1 << target) - 1)) / ((1 << cur) - 1)) + 1) / 2;
-}
-
 export class png {
 public:
   struct __attribute__((__packed__)) ihdr_t {
@@ -97,7 +74,7 @@ private:
   bool tainted = false;
   int writeLine();
   int scanline_mem = -1;
-}
+};
 
 uint32_t crc32(std::span<uint8_t> dat) {
 #if __ARM_FEATURE_CRC32 == true
@@ -288,7 +265,7 @@ int png::parsePalette(uint32_t length) {
     return -1;
   }
   palette.resize(length / 3);
-  for (uint i = 0; (i * 3) < length; i++) {
+  for (uint32_t i = 0; (i * 3) < length; i++) {
     in.read<rgb888>(palette);
   };
   return 0;
@@ -318,7 +295,7 @@ int png::decodeImageData(uint32_t length) {
     // [DDDD
     int consumed = filterline(bufout.data(), outlen - zstream.avail_out);
     int leftoverlen = outlen - zstream.avail_out - consumed;
-    memmove(bufout.data(), zstream.next_out - leftoverlen, leftoverlen);
+    std::memmove(bufout.data(), zstream.next_out - leftoverlen, leftoverlen);
     zstream.avail_out += consumed;
     zstream.next_out = bufout.data() + leftoverlen;
     if (zstream.avail_in == 0) {
@@ -413,7 +390,7 @@ int png::writeLine() {
         image.push_back(palette[pindex]);
       }
     } else if (ihdr.bit_depth == 8) {
-      for (uint i = 1; i < ihdr.width + 1; i++) {
+      for (uint32_t i = 1; i < ihdr.width + 1; i++) {
         image.push_back(palette[curline[i]]);
       }
     } else {
@@ -425,14 +402,14 @@ int png::writeLine() {
         image.emplace_back(*reinterpret_cast<rgb888 *>(&curline[i]));
       }
     } else if (ihdr.bit_depth == 16) {
-      for (uint i = 1; i < ihdr.width * 6 + 1; i += 6) {
+      for (uint32_t i = 1; i < ihdr.width * 6 + 1; i += 6) {
         image.emplace_back(curline[i], curline[i + 2], curline[i + 4]);
       }
     }
   } else if (ihdr.color_type == 0) {
     if (ihdr.bit_depth < 8) {
       uint8_t bmask = (1 << (ihdr.bit_depth)) - 1;
-      for (uint col = 8; col < ihdr.width * ihdr.bit_depth + 8;
+      for (uint32_t col = 8; col < ihdr.width * ihdr.bit_depth + 8;
            col += ihdr.bit_depth) {
         uint8_t val = bitscale<uint8_t>(
             std::rotl(curline[col / 8], col + ihdr.bit_depth) & bmask,
@@ -440,32 +417,32 @@ int png::writeLine() {
         image.emplace_back(val, val, val);
       }
     } else if (ihdr.bit_depth == 8) {
-      for (uint i = 1; i < ihdr.width + 1; i++) {
+      for (uint32_t i = 1; i < ihdr.width + 1; i++) {
         image.emplace_back(curline[i], curline[i], curline[i]);
       }
     } else if (ihdr.bit_depth == 16) {
-      for (uint i = 1; i < ihdr.width * 2 + 1; i += 2) {
+      for (uint32_t i = 1; i < ihdr.width * 2 + 1; i += 2) {
         image.emplace_back(curline[i], curline[i], curline[i]);
       }
     }
   } else if (ihdr.color_type == 4) {
     if (ihdr.bit_depth == 8) {
-      for (uint i = 1; i < ihdr.width * 2 + 1; i += 2) {
+      for (uint32_t i = 1; i < ihdr.width * 2 + 1; i += 2) {
         image.emplace_back(curline[i], curline[i], curline[i]);
       }
     } else if (ihdr.bit_depth == 16) {
-      for (uint i = 1; i < ihdr.width * 4 + 1; i += 4) {
+      for (uint32_t i = 1; i < ihdr.width * 4 + 1; i += 4) {
         image.emplace_back(curline[i], curline[i], curline[i]);
       }
     }
   } else if (ihdr.color_type == 6) {
     if (ihdr.bit_depth == 8) {
-      for (uint i = 1; i < ihdr.width * 4 + 1; i += 4) {
+      for (uint32_t i = 1; i < ihdr.width * 4 + 1; i += 4) {
         image.emplace_back(curline[i], curline[i + ihdr.bit_depth / 8],
                            curline[i + 2]);
       }
     } else if (ihdr.bit_depth == 16) {
-      for (uint i = 1; i < ihdr.width * 8 + 1; i += 8) {
+      for (uint32_t i = 1; i < ihdr.width * 8 + 1; i += 8) {
         image.emplace_back(curline[i], curline[i + 2], curline[i + 4]);
       }
     }
@@ -550,8 +527,8 @@ int png::time(int length) {
 int scale(double fctr, std::span<rgb888> image, size_t w, size_t h,
           std::span<rgb888> kernel) {
   double scl = 1 / fctr - 0.1;
-  for (uint r = 0; r < h; r++) {
-    for (uint c = 0; c < w; c++) {
+  for (uint32_t r = 0; r < h; r++) {
+    for (uint32_t c = 0; c < w; c++) {
       long int i = static_cast<int>(c * scl) + 480 * static_cast<int>(r * scl);
       image[r * w + c] = kernel[i];
     }

@@ -7,3 +7,4 @@ cmake*
 *.ninja*
 copies/
 compile_commands.json
+.cache/
