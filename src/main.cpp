@@ -1,8 +1,8 @@
-#include "main.h"
-#include "manga.h"
-#include "png.h"
-#include "ui.h"
-
+import fb;
+import manga;
+import ui;
+import debug;
+import config;
 frame_buffer fb("/dev/fb0");
 configuration conf;
 text_user_interface tui;

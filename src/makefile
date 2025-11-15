@@ -1,5 +1,5 @@
 #Made for (n)vim, so i can run ":make" and build my project
-.PHONY : run build clean grind debug tidy check
+.PHONY : run build clean grind debug tidy check analyze
 
 runcmd = ../fbmanga ../dat/png/*
 nin = ninja -j2 -C ..
@@ -20,6 +20,8 @@ debug : build
 
 tidy :
 	clang-format -i *.h *.cpp
+analyze:
+	clang --analyze --analyzer-output text *.h *.cpp
 
 check :
 	cppcheck --enable=all --report-progress ./

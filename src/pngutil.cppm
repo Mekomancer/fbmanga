@@ -1,47 +1,10 @@
-using namespace std::literals;
-#pragma once
-#ifdef NDEBUG
-#define dprf(...)
-#else
-#define dprf(...)                                                              \
-  std::print(__VA_ARGS__);                                                     \
-  fflush(0);
-#endif
-struct rgb888 {
-  uint8_t red, grn, blu;
-};
-
-/*png (network) to host byte order*/
-template <std::integral T> [[nodiscard]] constexpr T ptoh(T val) noexcept {
-  using enum std::endian;
-  if constexpr (native == big) {
-    return val;
-  } else if (native == little) {
-    return std::byteswap(val);
-  } else {
-    static_assert((native == little) || (native == big),
-                  "Mixed-endian not supported");
-  }
-}
-/*host to png (network) byte order*/
-template <std::integral T> [[nodiscard]] constexpr T htop(T val) noexcept {
-  using enum std::endian;
-  if constexpr (native == big) {
-    return std::byteswap(val);
-  } else if (native == little) {
-    return val;
-  } else {
-    static_assert((native == little) || (native == big),
-                  "Mixed-endian unsupported");
-  }
-}
-
-template <std::unsigned_integral T>
-constexpr T bitscale(T val, int cur, int target) {
-  return (((2 * val * ((1 << target) - 1)) / ((1 << cur) - 1)) + 1) / 2;
-}
-
-class ring_buf {
+module;
+#include <unistd.h>
+export module png.util;
+import std;
+import types;
+import std.compat;
+export class ring_buf {
 public:
   template <typename t = uint8_t> size_t peek(std::span<t> buf);
   template <typename t = uint8_t> size_t read(std::span<t> buf);
@@ -68,6 +31,8 @@ private:
   size_t begin = 0;
   size_t end = 0;
 };
+
+
 
 template <typename t> size_t ring_buf::peek(std::span<t> bufffer) {
   std::span<std::byte> buf = std::as_writable_bytes(bufffer);
@@ -119,21 +84,25 @@ template <typename t> size_t ring_buf::append(std::span<t> buf) {
   end = (end + num_bytes) % data.size();
   return num_bytes;
 }
+size_t ring_buf::resize(size_t newlen) {
+  if (newlen < data.size()) {
+    return data.size();
+  };
+  size_t oldsize = data.size();
+  data.resize(newlen + getpagesize());
+  if (is_wrapped()) {
+    std::memcpy(&data[oldsize], data.data(), end);
+    end = oldsize + end;
+  }
+  return data.size();
+}
 
-class configuration {
-public:
-  std::string mangadex_api_url = "api.mangadex."
-#ifndef NDEBUG
-                                 "dev";
-#else
-                                 "org";
-#endif
-  void indexArgs(int argn, char *argv[]);
-  int parseArgs();
+size_t ring_buf::size() { return data.size(); }
 
-private:
-  std::vector<std::string> args;
-};
-
-void printHelp();
-void printVersion();
+size_t ring_buf::len() {
+  if (is_wrapped()) {
+    return end + (data.size() - (begin + 1));
+  } else {
+    return end - begin;
+  }
+}

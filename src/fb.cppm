@@ -1,7 +1,32 @@
-#include "fb.h"
+module;
 #include <sys/ioctl.h>
-#include <filesystem>
+#include <sys/mman.h>
+#include <linux/fb.h>
+#include <fcntl.h>
+#include "debug.h"
+export module fb;
+import std;
+import std.compat;
+import types;
+extern conf;
+class frame_buffer {
+public:
+  bool constexpr inBounds(uint row, uint col) {
+    return (0 <= row && row < vinfo.yres && 0 <= col && col < vinfo.xres);
+  }
+  fb_var_screeninfo vinfo;
+  fb_fix_screeninfo finfo;
+  void printInfo();
+  void setPixel(int row, int col, rgb888 color) noexcept;
+  rgb888 getPixel(int row, int col);
+  frame_buffer() = delete;
+  explicit frame_buffer(std::filesystem::path fb_device = "/dev/fb0");
+  ~frame_buffer();
 
+private:
+  void *addr;
+  int fd;
+};
 namespace fs = std::filesystem;
 // this code was meant for a 565 screen, it may not work for a 888 screen
 frame_buffer::frame_buffer(fs::path fb_dev) {
@@ -9,6 +34,7 @@ frame_buffer::frame_buffer(fs::path fb_dev) {
   ioctl(fd, FBIOGET_FSCREENINFO, &finfo);
   ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
   addr = mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  info("frambuffer mmapped\n");
 }
 
 frame_buffer::~frame_buffer() { munmap(addr, finfo.smem_len); }

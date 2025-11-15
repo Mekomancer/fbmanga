@@ -1,19 +1,22 @@
-cmake_minimum_required(VERSION 3.31)#abitrary
-
-set(CMAKE_CXX_STANDARD 26)# we going crazy here, its not even 2026 yet
+cmake_minimum_required(VERSION 4.2)#nice
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+set(CMAKE_CXX_COMPILER_IMPORT_STD 23)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE iwyu)
-set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) #for clangd
 set(CMAKE_PCH_WARN_INVALID ON)
-set(CMAKE_BINARY_DIR ./build/)
-set(CMAKE_SOURCE_DIR ./src/)
-set(CMAKE_CXX_FLAGS "--stdlib=libc++ -mcpu='cortex-a53' -Wall")
+set(CMAKE_BINARY_DIR ./build)
+set(CMAKE_SOURCE_DIR ./src)
+set(CMAKE_CXX_COMPILER /lib/llvm-20/bin/clang)
+set(CMAKE_GENERATOR Ninja)
+set(CMAKE_CXX_FLAGS "-mcpu='cortex-a53' -Wall \
+-fapprox-func -fmessage-length=80")
 #needed for __crc32b() builtin-------^^^^^^^^^^^^^^^^^^
 
 find_package(RapidJSON)
+
 
 project(FBManga
   VERSION 0.0.0.0
@@ -21,51 +24,36 @@ project(FBManga
   LANGUAGES CXX
 )
 
+include(FetchContent)
+FetchContent_Declare(
+  std
+  URL "file:///home/mark/llvm-project/build/modules/c++/v1/"
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  SYSTEM
+)
+FetchContent_MakeAvailable(std)
+
 add_executable(fbmanga
-  src/fb.cpp
   src/main.cpp
   src/manga.cpp
-  src/png.cpp
   src/ui.cpp
-  src/util.cpp
 )
-
+add_dependencies(fbmanga std.compat)
 target_precompile_headers(fbmanga
   PRIVATE
-#C++ stdlib
-    <array>
-    <bit>
-    <chrono>
-    <cstdint>
-    <cstring>
-    <filesystem>
-    <format>
-    <functional>
-    <map>
-    <memory>
-    <numbers>
-    <print>
-    <regex>
-    <span>
-    <string>
-    <vector>
-    <numeric>
-#System
-    <arm_acle.h>
-    <fcntl.h>
-    <linux/fb.h>
-    <sys/mman.h>
-    <sys/stat.h>
-    <sys/ioctl.h>
-    <unistd.h>
-#Libs
-    <curl/curl.h>
-    <curses.h>
-    <rapidjson/document.h>
-    <zlib.h>
-
-    "src/util.h"
+  src/debug.h
+)
+target_sources(fbmanga
+  PRIVATE
+  FILE_SET CXX_MODULES
+  BASE_DIRS src
+  FILES
+  src/png.cppm
+  src/pngutil.cppm
+  src/fb.cppm
+  src/types.cppm
 )
 
-target_link_libraries(fbmanga curl ncurses z)
+
+target_link_libraries(fbmanga curl ncurses z std.compat)
 
