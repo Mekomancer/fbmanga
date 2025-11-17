@@ -1,5 +1,5 @@
-aaazx/odule;
-#include <arm_acle.haaazx/
+module;
+#include <arm_acle.h>
 #include <zlib.h>
 export module png;
 import debug;
@@ -94,20 +94,20 @@ bool png_t::validDepthColor() {
   return true;
 };
 int png_t::parseHead() {
+  info("Parsing PNG header\n");
   uint64_t file_sig = ptoh(in.pop<uint64_t>());
+  dump("file sig: {:16x}\n", file_sig);
+  dump("png  sig: {:16x}\n", signature);
   if (file_sig != signature) {
     err("Bad file sig\n");
-    err("    file sig: {:16x}\n", file_sig);
-    err("    png  sig: {:16x}\n", signature);
     tainted = true;
   }
   uint32_t len = ptoh(in.pop<uint32_t>());
+  dump("IHDR length: {:}",len);
   if (len != 13) {
-
     err("Bad IHDR (length should be 13, is {:})\n", len);
   };
   if (!checkCRC(len)) {
-    ;
     tainted = true;
   };
   uint32_t type = ptoh(in.pop<uint32_t>());
@@ -119,10 +119,8 @@ int png_t::parseHead() {
   ihdr = in.pop<png_t::ihdr_t>();
   ihdr.width = ptoh(ihdr.width);
   ihdr.height = ptoh(ihdr.height);
-  info("Width: {:d},", ihdr.width);
-  info("Height: {:d}, ", ihdr.height);
-  info("Bit depth: {:d}, ", ihdr.bit_depth);
-  info("Color type: {:d}\n", ihdr.color_type);
+  info("Width: {:d}, Height: {:d}, Bit depth: {:d}, Color type: {:d}",
+      ihdr.width, ihdr.height, ihdr.bit_depth, ihdr.color_type);
   if (!validDepthColor()) {
     warn("invalid color-type and bit-depth combonation");
     tainted = true;
@@ -268,6 +266,7 @@ int png_t::parsePalette(uint32_t length) {
   return 0;
 };
 int png_t::decodeImageData(uint32_t length) {
+  info("Decoding image data\n");
   in.pop<uint32_t>();
   size_t bytes_avail = length;
   size_t inlen = 2 * getpagesize();
@@ -280,7 +279,7 @@ int png_t::decodeImageData(uint32_t length) {
   zstream.next_out = bufout.data();
   zstream.avail_out = static_cast<unsigned int>(outlen);
   zstream.zalloc = Z_NULL, zstream.zfree = Z_NULL, zstream.opaque = Z_NULL,
-  zstream.avail_in = bufin.size();
+  zstream.avail_in = in.read<uint8_t>(bufin);
   bytes_avail -= zstream.avail_in;
   inflateInit2(&zstream, 0);
   int ret = inflate(&zstream, Z_SYNC_FLUSH);

@@ -41,14 +41,14 @@ target_sources(fbmanga
   FILE_SET CXX_MODULES
   BASE_DIRS src
   FILES
-  src/debug.cpp
-  src/png.cpp
-  src/pngutil.cpp
-  src/fb.cpp
-  src/types.cpp
-  src/ui.cpp
-  src/config.cpp
-  src/manga.cpp
+  src/debug.cxx
+  src/png.cxx
+  src/pngutil.cxx
+  src/fb.cxx
+  src/types.cxx
+  src/ui.cxx
+  src/config.cxx
+  src/manga.cxx
 )
 
 

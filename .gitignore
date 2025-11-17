@@ -8,3 +8,4 @@ cmake*
 copies/
 compile_commands.json
 .cache/
+log

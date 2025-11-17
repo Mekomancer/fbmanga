@@ -26,8 +26,9 @@ void init() {
 
 void cleanup(){
 #ifdef NDEBUG
-    tui.cleanup()
+  tui.cleanup()
 #endif
+  curl_global_cleanup();
 }
 
 std::string makefname(std::string_view manga, std::string_view chap, int img) {
@@ -56,10 +57,9 @@ int main(int argn, char *argv[]) {
     md.downloadImg(img_urls[i], &pngs[i].in);
     pngs[i].init();
     pngs[i].parseHead();
-    std::vector<rgb888> obuf;
-    obuf.resize(pngs[i].ihdr.width * pngs[i].ihdr.height);
+    std::vector<rgb888> obuf(pngs[i].image_size);
     pngs[i].decode();
-    //    double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
+
     for (uint32_t line = 0; line < pngs[i].ihdr.height; line++) {
 #ifdef NDEBUG
       switch (getch()) {
