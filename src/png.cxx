@@ -1,13 +1,13 @@
-module;
-import std;
-#include "debug.h"
-#include <arm_acle.h>
+aaazx/odule;
+#include <arm_acle.haaazx/
 #include <zlib.h>
 export module png;
-import config;
-import png.util;
+import debug;
+export import :util;
+import std;
 import types;
-export class png {
+
+export class png_t {
 public:
   struct __attribute__((__packed__)) ihdr_t {
     uint32_t width;
@@ -28,9 +28,10 @@ public:
   int decode();
 
 private:
+  // chunk handlers
+  void notImplYet(int len);
   int chrm(int len);
   int gama(int len);
-  double gamma = 1.0;
   int iccp(int len);
   int sbit(int len);
   int srgb(int len);
@@ -41,14 +42,14 @@ private:
   int ztxt(int len);
   int itxt(int len);
   int bkgd(int len);
-  rgb888 background = {0, 0, 0};
   int hist(int len);
   int phys(int len);
   int splt(int len);
   int exif(int len);
   int time(int len);
   int trns(int len);
-  void notImplYet(int len);
+
+  rgb888 background = {0, 0, 0};
   std::map<std::string, uint32_t> chunk_type{
       {"IHDR", 0x49'48'44'52}, {"PLTE", 0x50'4C'54'45}, {"IDAT", 0x49'44'41'54},
       {"IEND", 0x49'45'4E'44}, {"tRNS", 0x74'52'4E'52}, {"cHRM", 0x63'48'52'4D},
@@ -61,9 +62,10 @@ private:
       // this was all hand typed in, no copy paste, so may be innacurate...
   };
   static constexpr uint64_t signature = 0x89'50'4E'47'0D'0A'1A'0A;
+
+  double gamma = 1.0;
+
   std::vector<rgb888> palette;
-  bool valid_ihdr() noexcept;
-  uint32_t checksum = 0;
   bool checkCRC(uint32_t length);
   int decodeImageData(uint32_t length);
   int filterline(const uint8_t *buf, int length);
@@ -76,17 +78,7 @@ private:
   int scanline_mem = -1;
 };
 
-uint32_t crc32(std::span<uint8_t> dat) {
-#if __ARM_FEATURE_CRC32 == true
-  return ~std::accumulate(
-      dat.begin(), dat.end(), ~(0ul),
-      [](uint32_t checksum, uint8_t val) { return __crc32b(checksum, val); });
-#else // use zlibs crc
-  return crc32_z(uint32_t ret, dat.data(), dat.length());
-#endif
-}
-
-bool png::validDepthColor() {
+bool png_t::validDepthColor() {
   if (!std::has_single_bit(ihdr.bit_depth)) {
     return false;
   }
@@ -101,18 +93,18 @@ bool png::validDepthColor() {
   };
   return true;
 };
-int png::parseHead() {
+int png_t::parseHead() {
   uint64_t file_sig = ptoh(in.pop<uint64_t>());
   if (file_sig != signature) {
-    dprf("ERR: Bad file sig\n");
-    dprf("    file sig: {:16x}\n", file_sig);
-    dprf("    png  sig: {:16x}\n", signature);
+    err("Bad file sig\n");
+    err("    file sig: {:16x}\n", file_sig);
+    err("    png  sig: {:16x}\n", signature);
     tainted = true;
   }
   uint32_t len = ptoh(in.pop<uint32_t>());
   if (len != 13) {
 
-    dprf("ERR: Bad IHDR (first chunk's length should be 13, is {:})\n", len);
+    err("Bad IHDR (length should be 13, is {:})\n", len);
   };
   if (!checkCRC(len)) {
     ;
@@ -120,39 +112,39 @@ int png::parseHead() {
   };
   uint32_t type = ptoh(in.pop<uint32_t>());
   if (type != chunk_type["IHDR"]) {
-    dprf("ERR: First chunk is not IHDR, (got {:8x})\n", type);
+    err("First chunk is not IHDR, (got {:8x})\n", type);
     tainted = true;
     return -1;
   }
-  ihdr = in.pop<png::ihdr_t>();
+  ihdr = in.pop<png_t::ihdr_t>();
   ihdr.width = ptoh(ihdr.width);
   ihdr.height = ptoh(ihdr.height);
-  dprf("Width: {:d},", ihdr.width);
-  dprf("Height: {:d}, ", ihdr.height);
-  dprf("Bit depth: {:d}, ", ihdr.bit_depth);
-  dprf("Color type: {:d}\n", ihdr.color_type);
+  info("Width: {:d},", ihdr.width);
+  info("Height: {:d}, ", ihdr.height);
+  info("Bit depth: {:d}, ", ihdr.bit_depth);
+  info("Color type: {:d}\n", ihdr.color_type);
   if (!validDepthColor()) {
-    dprf("WARN: invalid color-type and bit-depth combonation");
+    warn("invalid color-type and bit-depth combonation");
     tainted = true;
   }
   if (ihdr.compression_method == 0) {
     info("Compression method: DEFLATE\n");
   } else {
-    dprf("ERR: Unknown compression method {:}\n", ihdr.compression_method);
+    err("Unknown compression method {:}\n", ihdr.compression_method);
     tainted = true;
   }
   if (ihdr.filter_method == 0) {
-    dprf("Filter method: Adaptive\n");
+    info("Filter method: Adaptive\n");
   } else {
-    dprf("ERR: Unknown filter method {:}\n", ihdr.filter_method);
+    err("Unknown filter method {:}\n", ihdr.filter_method);
     tainted = true;
   }
   if (ihdr.interlace_method == 0) {
-    dprf("Interlace method: Null\n");
+    info("Interlace method: Null\n");
   } else if (ihdr.interlace_method == 1) {
-    dprf("Interlace method: Adam7\n");
+    info("Interlace method: Adam7\n");
   } else {
-    dprf("ERR: Unknown filter method {:}\n", ihdr.interlace_method);
+    err("Unknown filter method {:}\n", ihdr.interlace_method);
     tainted = true;
   }
   image_size = static_cast<long>(ihdr.width) * static_cast<long>(ihdr.height);
@@ -176,33 +168,37 @@ int png::parseHead() {
   return 0;
 }
 
-bool png::checkCRC(uint32_t len) {
+bool png_t::checkCRC(uint32_t len) {
+  info("Checking CRC, length={:}\n", len);
   std::vector<uint8_t> buf(len + 8 /*crc and chunk type are 4 bytes each*/);
   in.peek<uint8_t>(buf);
   uint32_t calc = crc32(std::span(buf).subspan(0, len + 4));
   uint32_t crc = ptoh(*reinterpret_cast<uint32_t *>(&buf[len + 4]));
   if (crc == calc) {
+    info("CRC check passed ^.^ (calc: {:8x}, png: {:8x})\n", calc, crc);
     return true;
   } else {
-    dprf("CRC check failed ToT\ncalculted\t{:8x}\nexpected\t{:8x}\n", calc,
-         crc);
+    warn("CRC check failed ToT (calc: {:8x}, png: {:8x})\n", calc, crc);
     return false;
   }
   return false;
 }
 
-int png::init() {
-  checksum = ~0;
+int png_t::init() {
   image_size = 10;
+  info("PNG init'ed\n");
   return 0;
 }
 
-int png::decode() {
+int png_t::decode() {
+  info("Decoding PNG\n");
   while (in.len() > 0) {
     uint32_t length = ptoh(in.pop<uint32_t>());
+    dump("Chunk length: {:}\n", length);
     uint32_t buf;
     in.peek(std::span(reinterpret_cast<uint8_t *>(&buf), 4));
     buf = ptoh(buf);
+    dump("Chunk type: {:8x}\n",buf);
     if (buf == chunk_type["PLTE"]) {
       parsePalette(length);
     } else if (buf == chunk_type["IDAT"]) {
@@ -210,7 +206,7 @@ int png::decode() {
     } else if (buf == chunk_type["IEND"]) {
       return 0;
     } else if (buf == chunk_type["IHDR"]) {
-      dprf("ERR: more than one IHDR");
+      err("more than one IHDR\n");
     } else if (buf == chunk_type["tRNS"]) {
       trns(length);
     } else if (buf == chunk_type["cHRM"]) {
@@ -248,19 +244,20 @@ int png::decode() {
     } else {
       char tmp[] = "err:"; // posion so i can tell if not overwritten
       std::memcpy(tmp, &buf, 4);
-      dprf("WARN: unkown chunk (type: {:}, length {:})\n", tmp, length);
+      warn("unkown chunk (type: {:}, length {:})\n", tmp, length);
       notImplYet(length);
     }
     in.pop<uint32_t>(); // crc
+    dump("Bytes left: {:}\n",in.len());
   }
   return 0;
 }
 
-int png::parsePalette(uint32_t length) {
+int png_t::parsePalette(uint32_t length) {
   in.pop<uint32_t>();
   if (length % 3 != 0) {
-    dprf("ERR: Invalid PLTE chunk, PLTE length ({:d} bytes) is not divisible "
-         "by 3",
+    err("Invalid PLTE chunk, PLTE length ({:d} bytes) is not divisible "
+         "by 3\n",
          length);
     return -1;
   }
@@ -270,7 +267,7 @@ int png::parsePalette(uint32_t length) {
   };
   return 0;
 };
-int png::decodeImageData(uint32_t length) {
+int png_t::decodeImageData(uint32_t length) {
   in.pop<uint32_t>();
   size_t bytes_avail = length;
   size_t inlen = 2 * getpagesize();
@@ -299,7 +296,7 @@ int png::decodeImageData(uint32_t length) {
     zstream.avail_out += consumed;
     zstream.next_out = bufout.data() + leftoverlen;
     if (zstream.avail_in == 0) {
-      //   dprf("{:} of {:} done{:}\n", zstream.total_in,length,bytes_avail);
+      dump("{:} of {:} done{:}\n", zstream.total_in,length,bytes_avail);
       zstream.avail_in = in.read<uint8_t>(std::span<uint8_t>(
           bufin.data(), std::min(bufin.size(), bytes_avail)));
       bytes_avail -= zstream.avail_in;
@@ -328,7 +325,7 @@ int png::decodeImageData(uint32_t length) {
   };
 }
 
-int png::filterline(const uint8_t *buf, int length) {
+int png_t::filterline(const uint8_t *buf, int length) {
   int line = 0;
   int prev_offset = (bpp <= 8) ? 1 : bpp / 8;
   while (line + scanline_mem <= length) {
@@ -370,7 +367,7 @@ int png::filterline(const uint8_t *buf, int length) {
       }
       break;
     default:
-      dprf("Warn: unknown filter type encountered ({:})\n", buf[line]);
+      warn("unknown filter type encountered ({:})\n", buf[line]);
       tainted = true;
       break;
     }
@@ -381,7 +378,7 @@ int png::filterline(const uint8_t *buf, int length) {
   return line;
 }
 
-int png::writeLine() {
+int png_t::writeLine() {
   if (ihdr.color_type == 3) {
     if (ihdr.bit_depth < 8) {
       uint8_t bmask = (1 << (ihdr.bit_depth)) - 1;
@@ -394,7 +391,7 @@ int png::writeLine() {
         image.push_back(palette[curline[i]]);
       }
     } else {
-      dprf("ERR: Invalid bit depth");
+      err("Invalid bit depth\n");
     }
   } else if (ihdr.color_type == 2) {
     if (ihdr.bit_depth == 8) {
@@ -450,76 +447,95 @@ int png::writeLine() {
   return 0;
 }
 
-void png::notImplYet(int len) {
+void png_t::notImplYet(int len) {
+  warn("Chunk handler not implemeted yet, skipping chunk\n");
   std::vector<uint8_t> dummybuf(len + 8);
   in.read<uint8_t>(dummybuf);
+  info("Skipped {:} bytes\n", dummybuf.size());
   return;
 }
-int png::trns(int length) {
+int png_t::trns(int length) {
+  info("Decoding transparency info (type: tRNS length: {:})\n",length);
   notImplYet(length);
   return 0;
 }
-int png::chrm(int length) {
+int png_t::chrm(int length) {
+  info("Decoding chroma info, (type: cHRM, length: {:})\n",length);
   notImplYet(length);
   return 0;
 }
-int png::gama(int length) {
+int png_t::gama(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::iccp(int length) {
+int png_t::iccp(int length) {
+  info("Decoding ICC profile, (type: iCCP, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::sbit(int length) {
+int png_t::sbit(int length) {
+  info("Decoding sample depth info, (type: sBIT, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::srgb(int length) {
+int png_t::srgb(int length) {
+  info("Decoding sRGB info, (type: sRGB, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::cicp(int length) {
+int png_t::cicp(int length) {
+  info("Decoding color info, (type: cICP, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::mdcv(int length) {
+int png_t::mdcv(int length) {
+  info("Decoding color info, (type: mDCV, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::itxt(int length) {
+int png_t::itxt(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::text(int length) {
+int png_t::text(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::ztxt(int length) {
+int png_t::ztxt(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::bkgd(int length) {
+int png_t::bkgd(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::hist(int length) {
+int png_t::hist(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::phys(int length) {
+int png_t::phys(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::splt(int length) {
+int png_t::splt(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::exif(int length) {
+int png_t::exif(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }
-int png::time(int length) {
+int png_t::time(int length) {
+  info("Decoding gamma info, (type: gAMA, length: {:}\n", length);
   notImplYet(length);
   return 0;
 }

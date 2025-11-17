@@ -2,9 +2,9 @@
 .PHONY : run build clean grind debug tidy check analyze
 
 runcmd = ../fbmanga ../dat/png/*
-nin = ninja -j2 -C ..
+nin = ninja -j1 -C ..
 run : build
-	$(runcmd)
+	$(runcmd) -v | tee log
 
 build :
 	$(nin)
@@ -19,7 +19,8 @@ debug : build
 	gdbtui --args $(runcmd)
 
 tidy :
-	clang-format -i *.h *.cpp
+	clang-format -i *.cpp
+
 analyze:
 	clang --analyze --analyzer-output text *.h *.cpp
 

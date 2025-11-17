@@ -1,3 +1,5 @@
+module;
+#include <cstdint>
 export module types;
 import std;
 export typedef std::uint8_t uint8_t;

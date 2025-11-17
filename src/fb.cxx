@@ -1,14 +1,14 @@
 module;
+#include <fcntl.h>
+#include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <linux/fb.h>
-#include <fcntl.h>
-#include "debug.h"
 export module fb;
+import debug;
 import std;
 import types;
-import png.util;
 import config;
+import png;
 
 export class frame_buffer {
 public:

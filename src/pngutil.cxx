@@ -1,11 +1,22 @@
 module;
-#include "debug.h"
 #include <unistd.h>
-export module png.util;
+#include <arm_acle.h>
+export module png:util;
+import debug;
 import std;
 import types;
-import std.compat;
 /*png (network) to host byte order*/
+
+uint32_t crc32(std::span<uint8_t> dat) {
+#if __ARM_FEATURE_CRC32 == true
+  return ~std::accumulate(
+      dat.begin(), dat.end(), ~(0ul),
+      [](uint32_t checksum, uint8_t val) { return __crc32b(checksum, val); });
+#else // use zlibs crc
+  return crc32_z(uint32_t ret, dat.data(), dat.length());
+#endif
+}
+
 export template <typename T> [[nodiscard]] constexpr T ptoh(T val) noexcept {
   using enum std::endian;
   if constexpr (native == big) {
@@ -24,8 +35,7 @@ export template <typename T> [[nodiscard]] constexpr T htop(T val) noexcept {
 }
 static_assert(htop(ptoh(1)) == 1);
 
-export template <typename T>
-constexpr T bitscale(T val, int cur, int target) {
+export template <typename T> constexpr T bitscale(T val, int cur, int target) {
   return (((2 * val * ((1 << target) - 1)) / ((1 << cur) - 1)) + 1) / 2;
 }
 export class ring_buf {
@@ -56,8 +66,6 @@ private:
   size_t end = 0;
 };
 
-
-
 template <typename t> size_t ring_buf::peek(std::span<t> bufffer) {
   std::span<std::byte> buf = std::as_writable_bytes(bufffer);
   size_t num_bytes = std::min(buf.size(), len());
@@ -72,7 +80,7 @@ template <typename t> size_t ring_buf::peek(std::span<t> bufffer) {
       buf.subspan(begin_bytes, end_bytes) = std::span<std::byte>(
           reinterpret_cast<std::byte *>(&data[0]), end_bytes);
       if (end_bytes + begin_bytes != num_bytes) {
-        dprf("ERR: ring_buf::peek()");
+        err("ring_buf::peek()");
       }
     }
   }
@@ -101,7 +109,7 @@ template <typename t> size_t ring_buf::append(std::span<t> buf) {
       size_t end_bytes = std::min(num_bytes - begin_bytes, end);
       std::memcpy(data.data(), &buf[begin_bytes], end_bytes);
       if (end_bytes + begin_bytes != num_bytes) {
-        dprf("ERR: ring_buf::peek()");
+        err("ring_buf::peek()");
       }
     }
   }

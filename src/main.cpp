@@ -1,13 +1,15 @@
 import fb;
 import manga.dex;
 import ui.tui;
-#include "debug.h"
-#include <curl/curl.h>
+import std;
 #include <clocale>
+#include <curl/curl.h>
 import config;
 import types;
 import std;
 import png;
+import debug;
+
 frame_buffer fb("/dev/fb0");
 text_user_interface tui;
 
@@ -16,7 +18,7 @@ void init() {
 #ifdef NDEBUG
   tui.init();
 #else
-  dprf("Warn: tui not initialized, auto choosing\n");
+  warn("tui not initialized, auto choosing\n");
 #endif
   curl_global_init(CURL_GLOBAL_ALL);
   return;
@@ -49,7 +51,7 @@ int main(int argn, char *argv[]) {
                  [](mangadex::chapter_info info) { return info.desc; });
   int chapter_choice = tui.choose(choices);
   std::vector<std::string> img_urls = md.getImgUrls(chaps[chapter_choice].id);
-  std::vector<png> pngs(img_urls.size());
+  std::vector<png_t> pngs(img_urls.size());
   for (uint i = 0; i < pngs.size(); ++i) {
     md.downloadImg(img_urls[i], &pngs[i].in);
     pngs[i].init();
@@ -58,8 +60,7 @@ int main(int argn, char *argv[]) {
     obuf.resize(pngs[i].ihdr.width * pngs[i].ihdr.height);
     pngs[i].decode();
     //    double factor = 479.0 / static_cast<double>(pngs[i].ihdr.width);
-    for (uint line = 0; line < pngs[i].ihdr.height; line++) {
-      display(pngs[i].image, line);
+    for (uint32_t line = 0; line < pngs[i].ihdr.height; line++) {
 #ifdef NDEBUG
       switch (getch()) {
       case KEY_UP:
@@ -73,17 +74,5 @@ int main(int argn, char *argv[]) {
     };
   }
   curl_global_cleanup();
-  return 0;
-}
-
-int display(std::span<rgb888> image, int scroll) {
-  for (uint col = 0; col < fb.vinfo.yres; col++) {
-    for (uint row = 0; row < fb.vinfo.xres; row++) {
-      if (0 < row + scroll && (row + scroll * 420 + col) < image.size()) {
-        fb.setPixel(fb.vinfo.yres - 1 - col, row,
-                    image[(row + scroll) * 420 + col]);
-      }
-    }
-  }
   return 0;
 }

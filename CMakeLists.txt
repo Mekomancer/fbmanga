@@ -36,21 +36,21 @@ FetchContent_MakeAvailable(std)
 add_executable(fbmanga
   src/main.cpp
 )
-add_dependencies(fbmanga std.compat)
 target_sources(fbmanga
   PRIVATE
   FILE_SET CXX_MODULES
   BASE_DIRS src
   FILES
-  src/png.cppm
-  src/pngutil.cppm
-  src/fb.cppm
-  src/types.cppm
-  src/ui.cppm
-  src/config.cppm
-  src/manga.cppm
+  src/debug.cpp
+  src/png.cpp
+  src/pngutil.cpp
+  src/fb.cpp
+  src/types.cpp
+  src/ui.cpp
+  src/config.cpp
+  src/manga.cpp
 )
 
 
-target_link_libraries(fbmanga curl ncurses z std.compat)
+target_link_libraries(fbmanga curl ncurses z std)
 
