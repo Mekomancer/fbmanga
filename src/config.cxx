@@ -1,14 +1,11 @@
 export module config;
 import std;
 import types;
+
 export class configuration {
 public:
-  enum struct verboseness {
-    err,
-    warn,
-    info,
-    dump,
-  } verbosity = verboseness::warn;
+  std::map<std::string, bool> logging{
+      {"all", false}, {"location",false},{"error", true}, {"warn", true}};
   std::string mangadex_api_url = "api.mangadex."
 #ifndef NDEBUG
                                  "dev";
@@ -17,12 +14,12 @@ public:
 #endif
   void indexArgs(int argn, char *argv[]);
   int parseArgs();
+
 private:
   std::vector<std::string> args;
 };
 
 export configuration conf;
-export typedef configuration::verboseness lvl;
 void configuration::indexArgs(int argn, char *argv[]) {
   for (int i = 0; i < argn; i++) {
     args.push_back(argv[i]);
@@ -43,7 +40,8 @@ int configuration::parseArgs() {
       printVersion();
       std::exit(0);
     } else if (arg == "-v") {
-      verbosity = verboseness::dump;
+      logging["all"] = true;
+      logging["location"] = true;
     }
   }
   return 0;

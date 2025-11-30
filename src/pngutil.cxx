@@ -1,6 +1,6 @@
 module;
-#include <unistd.h>
 #include <arm_acle.h>
+#include <unistd.h>
 export module png:util;
 import debug;
 import std;
@@ -80,7 +80,7 @@ template <typename t> size_t ring_buf::peek(std::span<t> bufffer) {
       buf.subspan(begin_bytes, end_bytes) = std::span<std::byte>(
           reinterpret_cast<std::byte *>(&data[0]), end_bytes);
       if (end_bytes + begin_bytes != num_bytes) {
-        err("ring_buf::peek()");
+        log("error: end_bytes + begin_bytes != num_bytes", here());
       }
     }
   }
@@ -109,7 +109,7 @@ template <typename t> size_t ring_buf::append(std::span<t> buf) {
       size_t end_bytes = std::min(num_bytes - begin_bytes, end);
       std::memcpy(data.data(), &buf[begin_bytes], end_bytes);
       if (end_bytes + begin_bytes != num_bytes) {
-        err("ring_buf::peek()");
+        log("error: end_bytes + begin_bytes != num_bytes", here());
       }
     }
   }

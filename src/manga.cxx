@@ -6,6 +6,7 @@ import config;
 import std;
 import debug;
 import png;
+
 using namespace std::literals;
 namespace rj = rapidjson;
 export class mangadex {
@@ -21,11 +22,13 @@ public:
   std::vector<chapter_info> getChapters(std::string_view manga_id);
   std::vector<std::string> getMangaId(std::string_view title = "acchi kocchi");
   std::vector<std::string> getImgUrls(std::string_view chapter);
-  void downloadImg(std::string_view img_url, ring_buf *buf);
+  int downloadImg(std::string_view img_url, ring_buf *buf);
   int initTokens();
   std::string getAccessToken();
   static constexpr time_t access_token_lifetime = 60 * 15; // as of 09/03/25
 private:
+  bool report();
+  int http_status;
   void dumpUrl();
   void queryAdd(std::string_view param, std::string_view val);
   void clearQuery();
@@ -43,9 +46,72 @@ private:
   CURL *curl;
   void prepareCurl();
 };
-namespace rj = rapidjson;
 
+bool mangadex::report() {
+  char *img_url = nullptr;
+  bool ok = false;
+  curl_off_t size;
+  curl_off_t dur;
+  curl_header *xcache = nullptr;
+  bool cache = false;
+  if (curl_easy_header(curl, "X-Cache", 0, CURLH_HEADER, -1, &xcache) ==
+      CURLHE_OK) {
+    log("dump:{}: {}\n",here(), xcache->name, xcache->value); 
+    if (std::strcmp(xcache->value, "HIT") != 0) {
+      cache = true;
+    }
+  };
+  curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &size);
+  if (size == -1) {
+    size = 0;
+  }
+  long code;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  if(code < 300 && code >= 200){
+    ok = true;
+  }
+  curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME_T, &dur);
+  curl_url_get(url, CURLUPART_URL, &img_url, 0);
+  prepareCurl();
+  curl_url_set(url, CURLUPART_HOST, "api.mangadex.network", 0);
+  curl_mime *mime = curl_mime_init(curl);
+  curl_mimepart *mcontent = curl_mime_addpart(mime);
+  std::string mdata =
+      std::format("{{\"url\":\"{}\",\"success\":{:s},\"bytes\":{},"
+                  "\"duration\":{},\"cached\":{:s}}}",
+                  img_url, ok, size, dur / 1'000, cache);
+  log("dump: /report data: {}\n",here(), mdata);
+  log("dump: status code: {}\n", here(), code);
+  curl_mime_type(mcontent, "application/json");
+  curl_mime_data(mcontent, mdata.c_str(), mdata.length());
+  curl_easy_perform(curl);
+  curl_free(img_url);
+  return ok;
+}
+
+size_t get_status_code(char *ptr, size_t size, size_t nmemb, void *userdata) {
+  reinterpret_cast<std::string *>(userdata)->append(ptr, nmemb);
+  return nmemb;
+}
+
+// curl callback func
+size_t fillstr(char *ptr, size_t size, size_t nmemb, void *userdata) {
+  if (size != 1) {
+    log("warn:size ({:}) != 1, strange...\n",here(), size); 
+  }
+  reinterpret_cast<std::string *>(userdata)->append(ptr, nmemb);
+  return nmemb;
+};
+
+size_t fillbuf(char *ptr, size_t size, size_t nmemb, void *userdata) {
+  if (size != 1) {
+    log("warn:size ({:}) != 1, strange...\n",here(), size); 
+  }
+  reinterpret_cast<ring_buf *>(userdata)->append(std::span(ptr, nmemb));
+  return nmemb;
+}
 void mangadex::prepareCurl() {
+  curl_easy_reset(curl);
   curl_easy_setopt(curl, CURLOPT_AUTOREFERER, true);
   curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, CURLFOLLOW_ALL);
@@ -54,42 +120,26 @@ void mangadex::prepareCurl() {
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "FBManga/0.1");
   curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_3);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, !false);
+  curl_url_cleanup(url);
+  url = curl_url();
   curl_easy_setopt(curl, CURLOPT_CURLU, url);
   curl_url_set(url, CURLUPART_SCHEME, "https", 0);
   curl_url_set(url, CURLUPART_HOST, conf.mangadex_api_url.c_str(), 0);
 };
-
-// curl callback func
-size_t fillstr(char *ptr, size_t size, size_t nmemb, void *userdata) {
-  if (size != 1) {
-    warn("size ({:}) != 1, strange...\n", size);
-  }
-  reinterpret_cast<std::string *>(userdata)->append(ptr, nmemb);
-  return nmemb;
-};
-
-size_t fillbuf(char *ptr, size_t size, size_t nmemb, void *userdata) {
-  if (size != 1) {
-    warn("size ({:}) != 1, strange...\n", size);
-  }
-  reinterpret_cast<ring_buf *>(userdata)->append(std::span(ptr, nmemb));
-  return nmemb;
-}
-
 bool mangadex::checkup() {
-  info("Starting MangaDex ping healthcheck\n");
+  log("info:Starting MangaDex ping healthcheck\n",here()); 
   prepareCurl();
   setEndpoint("get-ping");
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   CURLcode ret = curl_easy_perform(curl);
-  dump("/ping returned \"{:}\"", buffer);
+  log("dump:/ping returned \"{:}\"\n",here(), buffer); 
   if (ret == CURLE_OK && buffer == "pong") {
-    info("MangaDex's ping healthcheck succeeded\n");
+    log("info:MangaDex's ping healthcheck succeeded\n",here()); 
     return true;
   } else {
-    err("MangaDex's ping healthcheck failed, curl returned {:} ({:})\n",
+    log("error: MangaDex's ping healthcheck failed, curl returned {:} ({:})\n", here(),
         static_cast<int>(ret), curl_easy_strerror(ret));
     return false;
   }
@@ -104,23 +154,26 @@ int mangadex::setCreds(std::string_view name, std::string_view psswd,
   return 0;
 };
 
-void mangadex::downloadImg(std::string_view img_url, ring_buf *buf) {
-  info("Downloading image from {:}\n", img_url);
+int mangadex::downloadImg(std::string_view img_url, ring_buf *buf) {
+  log("info:Downloading image from {:}\n",here(), img_url); 
   prepareCurl();
   curl_url_set(url, CURLUPART_URL, img_url.data(), 0);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillbuf);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, buf);
   CURLcode code = curl_easy_perform(curl);
-  if (code == CURLE_OK)
-    info("Finished downloading image\n");
-  if (code != CURLE_OK) {
-    err("curl returned {} ({})\n", static_cast<int>(code),
-         curl_easy_strerror(code));
+  bool ok = report();
+  if (code == CURLE_OK){
+    log("info: Finished downloading image\n",here()); 
+    return ok?0:-1;
+  }else {
+    log("error: curl returned {} ({})\n", here(), static_cast<int>(code),
+        curl_easy_strerror(code));
+    return -1;
   }
 }
 
 std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
-  info("Retriving image urls for chapter {:}\n", chapter);
+  log("info:Retriving image urls for chapter {:}\n",here(), chapter); 
   prepareCurl();
   setEndpoint("get-at-home-server-chapterId", chapter);
   clearQuery();
@@ -128,10 +181,10 @@ std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   CURLcode code = curl_easy_perform(curl);
-  dump("MD returned \"{:}\"\n", buffer);
+  log("dump:MD returned \"{:}\"\n",here(), buffer); 
   if (code != CURLE_OK) {
-    err("curl returned {} ({})\n", static_cast<int>(code),
-         curl_easy_strerror(code));
+    log("error: curl returned {} ({})\n",here(), static_cast<int>(code),
+        curl_easy_strerror(code));
     return {};
   }
   rj::Document doc;
@@ -144,7 +197,7 @@ std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
                  [base, hash](rj::Value &val) {
                    return base + "/data/" + hash + "/" + val.GetString();
                  });
-  info("Retrived image urls successfully\n");
+  log("info:Retrived image urls successfully\n",here()); 
   return ret;
 }
 
@@ -178,7 +231,7 @@ void mangadex::queryAdd(std::string_view param, std::string_view val) {
 };
 void mangadex::clearQuery() { curl_url_set(url, CURLUPART_QUERY, "", 0); }
 std::vector<std::string> mangadex::getMangaId(std::string_view title) {
-  info("Searching for manga with title {:}\n", title);
+  log("info:Searching for manga with title {:}\n",here(), title); 
   prepareCurl();
   setEndpoint("get-search-manga");
   clearQuery();
@@ -187,10 +240,10 @@ std::vector<std::string> mangadex::getMangaId(std::string_view title) {
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   CURLcode code = curl_easy_perform(curl);
-  info("MD returned \"{:}\"\n", buffer);
+  log("info:MD returned \"{:}\"\n",here(), buffer); 
   if (code != CURLE_OK) {
-    err("curl returned {} ({})\n", static_cast<int>(code),
-         curl_easy_strerror(code));
+    log("error: curl returned {} ({})\n",here(), static_cast<int>(code),
+        curl_easy_strerror(code));
     return {};
   }
   rj::Document doc;
@@ -199,7 +252,7 @@ std::vector<std::string> mangadex::getMangaId(std::string_view title) {
   std::transform(
       doc["data"].GetArray().Begin(), doc["data"].GetArray().End(), ret.begin(),
       [](rj::Value &val) { return std::string(val["id"].GetString()); });
-  info("Found manga successfully\n");
+  log("info:Found manga successfully\n",here()); 
   return ret;
 };
 std::vector<mangadex::chapter_info>
@@ -215,8 +268,8 @@ mangadex::getChapters(std::string_view manga_id) {
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   CURLcode code = curl_easy_perform(curl);
   if (code != CURLE_OK) {
-    err("curl returned {} ({})\n", static_cast<int>(code),
-         curl_easy_strerror(code));
+    log("error: curl returned {} ({})\n", here(), static_cast<int>(code),
+        curl_easy_strerror(code));
   }
   rj::Document doc;
   doc.Parse(buffer.c_str());
@@ -246,9 +299,8 @@ mangadex::getChapters(std::string_view manga_id) {
 }
 
 void mangadex::dumpUrl() {
-  if (conf.verbosity >= configuration::verboseness::dump) {
     char *str;
     curl_url_get(url, CURLUPART_URL, &str, 0);
-    dump("{}\n", str);
-  }
+    log("dump:{}\n",here(), str); 
+    curl_free(str);
 };

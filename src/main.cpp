@@ -18,17 +18,17 @@ void init() {
 #ifdef NDEBUG
   tui.init();
 #else
-  warn("tui not initialized, auto choosing\n");
+  log("warn: tui not initialized, auto choosing\n",here());
 #endif
   curl_global_init(CURL_GLOBAL_ALL);
   return;
 };
 
-void cleanup(){
+void cleanup() {
 #ifdef NDEBUG
   tui.cleanup()
 #endif
-  curl_global_cleanup();
+      curl_global_cleanup();
 }
 
 std::string makefname(std::string_view manga, std::string_view chap, int img) {
@@ -51,15 +51,18 @@ int main(int argn, char *argv[]) {
   std::transform(chaps.begin(), chaps.end(), choices.begin(),
                  [](mangadex::chapter_info info) { return info.desc; });
   int chapter_choice = tui.choose(choices);
+retry_download:
   std::vector<std::string> img_urls = md.getImgUrls(chaps[chapter_choice].id);
   std::vector<png_t> pngs(img_urls.size());
   for (uint i = 0; i < pngs.size(); ++i) {
-    md.downloadImg(img_urls[i], &pngs[i].in);
     pngs[i].init();
+    if(md.downloadImg(img_urls[i], &pngs[i].in) < 0){
+      log("warn: failed to fetch images, retrying",here());
+      goto retry_download;
+    }
     pngs[i].parseHead();
     std::vector<rgb888> obuf(pngs[i].image_size);
     pngs[i].decode();
-
     for (uint32_t line = 0; line < pngs[i].ihdr.height; line++) {
 #ifdef NDEBUG
       switch (getch()) {

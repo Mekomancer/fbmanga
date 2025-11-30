@@ -2,9 +2,11 @@ FBManga
 
 Created by Mark Z. R.
 
-Fbmanga is a program to view manga on the command line.
+Fbmanga is a program to view manga on the command line. it probaly won't work/
+build on your device.
 
 Couple things that might explain some ~~bad~~ unique choices.
+
 
 1. I am coding on a rpi zero 2, for a rpi zero 2.
   - this means I have 416MB of ram

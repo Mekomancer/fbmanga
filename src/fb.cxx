@@ -35,7 +35,7 @@ frame_buffer::frame_buffer(fs::path fb_dev) {
   ioctl(fd, FBIOGET_FSCREENINFO, &finfo);
   ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
   addr = mmap(0, finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  info("frambuffer mmapped\n");
+  log("info: frambuffer mmapped\n", here());
 }
 
 frame_buffer::~frame_buffer() { munmap(addr, finfo.smem_len); }

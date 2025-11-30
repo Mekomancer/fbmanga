@@ -22,7 +22,7 @@ void printVersion();
 
 void text_user_interface::init() {
   if (initialized) {
-    warn("tui already initialized");
+    log("warn: tui already initialized",here());
   }
   initscr();
   cbreak();
@@ -40,7 +40,7 @@ size_t text_user_interface::choose(std::span<std::string> opts) {
   }
   if (!initialized) {
 #ifdef NDEBUG
-    warn("tui not initialized, auto choosing {:}", opts[0]);
+    log("warn: tui not initialized, auto choosing {:}", here(), opts[0]);
 #endif
     return 0;
   } else {
@@ -52,6 +52,6 @@ void text_user_interface::cleanup() {
   if (initialized) {
     endwin();
   } else {
-    warn("tui not initialized so nothing to cleanup");
+    log("warn: tui not initialized so nothing to cleanup",here());
   }
 }

@@ -19,7 +19,7 @@ debug : build
 	gdbtui --args $(runcmd)
 
 tidy :
-	clang-format -i *.cpp
+	clang-format-20 -i *.cpp *.cxx
 
 analyze:
 	clang --analyze --analyzer-output text *.h *.cpp

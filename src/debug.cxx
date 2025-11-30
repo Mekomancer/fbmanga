@@ -1,48 +1,39 @@
 export module debug;
 import std;
-export import config;
+import config;
+import types;
+
+export std::source_location
+here(std::source_location loc = std::source_location::current()) {
+  return loc;
+}
+std::string current_file = "";
+std::string current_func = "";
 
 export template <typename... args_t>
-void dprf(configuration::verboseness severity, std::format_string<args_t...> fmt, args_t &&...args) {
-  if (conf.verbosity >= severity) {
-    std::string prefix = "";
-    switch (severity) {
-      using enum configuration::verboseness;
-    case err:
-      prefix = "!ERR: ";
-      break;
-    case warn:
-      prefix = "WARN: ";
-      break;
-    case info:
-      prefix = "INFO: ";
-      break;
-    case dump:
-      prefix = "DUMP: ";
-      break;
-    default:
-      prefix = "MISC: ";
-      break;
+void log(std::format_string<args_t...> fmt, std::source_location loc,
+         args_t &&...args) {
+  if (!conf.logging["all"]) {
+    for (auto msg_type : conf.logging) {
+      if (fmt.get().starts_with(msg_type.first + ":") &&
+          msg_type.second == false) {
+        return;
+      }
     }
-    std::print("{}",prefix);
-    std::print(fmt, std::forward<args_t>(args)...);
-    std::fflush(0);
   }
-}
-
-export template <typename... args_t>
-void err(std::format_string<args_t...> fmt, args_t &&...args) {
-  dprf(configuration::verboseness::err,fmt,std::forward<args_t>(args)...);
-}
-export template <typename... args_t>
-void warn(std::format_string<args_t...> fmt, args_t &&...args) {
-  dprf(configuration::verboseness::warn,fmt,std::forward<args_t>(args)...);
-}
-export template <typename... args_t>
-void info(std::format_string<args_t...> fmt, args_t &&...args) {
-  dprf(configuration::verboseness::info,fmt,std::forward<args_t>(args)...);
-}
-export template <typename... args_t>
-void dump(std::format_string<args_t...> fmt, args_t &&...args) {
-  dprf(configuration::verboseness::dump,fmt,std::forward<args_t>(args)...);
+  if (conf.logging["location"]) {
+    if (loc.file_name() != current_file) {
+      std::print("{}\n", loc.file_name());
+      current_file = loc.file_name();
+    }
+    std::print("|");
+    if (loc.function_name() != current_func) {
+      std::print("{}\n|", loc.function_name());
+      current_func = loc.function_name();
+    }
+    std::print("|");
+    std::print("{:4} ", loc.line());
+  }
+  std::print(fmt, std::forward<args_t>(args)...);
+  std::fflush(0);
 }
