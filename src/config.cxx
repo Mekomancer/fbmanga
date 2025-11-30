@@ -31,7 +31,8 @@ void printHelp() { std::println("USAGE: fbmanga [OPTION]... [TITLE|FILE]..."); }
 void printVersion() { std::println("FBManga v0.1"); }
 
 int configuration::parseArgs() {
-  for (uint32_t i = 0; i < args.size(); i++) {
+  int v_count = 0;
+  for (uint32_t i = 0; i < args.size(); ++i) {
     std::string arg = args[i];
     if (arg == "-h" || arg == "--help") {
       printHelp();
@@ -40,8 +41,13 @@ int configuration::parseArgs() {
       printVersion();
       std::exit(0);
     } else if (arg == "-v") {
-      logging["all"] = true;
-      logging["location"] = true;
+      ++v_count;
+      if(v_count > 0){
+	logging["all"] = true;
+      }
+      if(v_count > 1){
+	logging["location"] = true;
+      }
     }
   }
   return 0;

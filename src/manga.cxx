@@ -30,6 +30,7 @@ private:
   bool report();
   int http_status;
   void dumpUrl();
+  CURLcode perform(std::source_location loc = std::source_location::current());
   void queryAdd(std::string_view param, std::string_view val);
   void clearQuery();
   void setEndpoint(std::string_view endpoint);
@@ -81,7 +82,7 @@ bool mangadex::report() {
                   "\"duration\":{},\"cached\":{:s}}}",
                   img_url, ok, size, dur / 1'000, cache);
   log("dump: /report data: {}\n",here(), mdata);
-  log("dump: status code: {}\n", here(), code);
+  log("info: status code: {}\n", here(), code);
   curl_mime_type(mcontent, "application/json");
   curl_mime_data(mcontent, mdata.c_str(), mdata.length());
   curl_easy_perform(curl);
@@ -126,21 +127,36 @@ void mangadex::prepareCurl() {
   curl_url_set(url, CURLUPART_SCHEME, "https", 0);
   curl_url_set(url, CURLUPART_HOST, conf.mangadex_api_url.c_str(), 0);
 };
+
+CURLcode mangadex::perform(std::source_location loc){
+  log("jrnl: Starting transfer\n", loc);
+  CURLcode ret = curl_easy_perform(curl);
+  log("jrnl: Transfer finished\n", loc);
+  long httpcode = -1;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE,&httpcode);
+  log("info: curl returned `{}` ({}), http code: \n", loc,
+      static_cast<int>(ret), curl_easy_strerror(ret), httpcode);
+  curl_off_t ttfb;
+  curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME_T, &ttfb);
+  curl_off_t total;
+  curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME_T, &total);
+  log("stat: {}ms {}ms ({:+}ms)", loc, ttfb/1000, total/1000, (total - ttfb)/1000); 
+  return ret;
+}
+
 bool mangadex::checkup() {
-  log("info:Starting MangaDex ping healthcheck\n",here()); 
+  log("jrnl: Starting MangaDex healthcheck\n", here()); 
   prepareCurl();
   setEndpoint("get-ping");
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillstr);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-  CURLcode ret = curl_easy_perform(curl);
-  log("dump:/ping returned \"{:}\"\n",here(), buffer); 
+  CURLcode ret = perform();
+  log("dump: {}\n",here(), buffer); 
   if (ret == CURLE_OK && buffer == "pong") {
-    log("info:MangaDex's ping healthcheck succeeded\n",here()); 
     return true;
   } else {
-    log("error: MangaDex's ping healthcheck failed, curl returned {:} ({:})\n", here(),
-        static_cast<int>(ret), curl_easy_strerror(ret));
+    log("error: ",here());
     return false;
   }
 }
@@ -155,15 +171,16 @@ int mangadex::setCreds(std::string_view name, std::string_view psswd,
 };
 
 int mangadex::downloadImg(std::string_view img_url, ring_buf *buf) {
-  log("info:Downloading image from {:}\n",here(), img_url); 
+  log("info: Downloading image\n",here()); 
+  log("dump: image url: {}\n", here(), img_url);
   prepareCurl();
   curl_url_set(url, CURLUPART_URL, img_url.data(), 0);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fillbuf);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, buf);
   CURLcode code = curl_easy_perform(curl);
+  log("info: Finished downloading image\n", here()); 
   bool ok = report();
   if (code == CURLE_OK){
-    log("info: Finished downloading image\n",here()); 
     return ok?0:-1;
   }else {
     log("error: curl returned {} ({})\n", here(), static_cast<int>(code),
@@ -181,7 +198,7 @@ std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
   std::string buffer;
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
   CURLcode code = curl_easy_perform(curl);
-  log("dump:MD returned \"{:}\"\n",here(), buffer); 
+  log("dump: MD returned \"{:}\"\n",here(), buffer); 
   if (code != CURLE_OK) {
     log("error: curl returned {} ({})\n",here(), static_cast<int>(code),
         curl_easy_strerror(code));
@@ -197,7 +214,7 @@ std::vector<std::string> mangadex::getImgUrls(std::string_view chapter) {
                  [base, hash](rj::Value &val) {
                    return base + "/data/" + hash + "/" + val.GetString();
                  });
-  log("info:Retrived image urls successfully\n",here()); 
+  log("jrnl: Retrived image urls successfully\n",here()); 
   return ret;
 }
 

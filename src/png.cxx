@@ -304,7 +304,7 @@ int png_t::decodeImageData(uint32_t length) {
     zstream.avail_out += consumed;
     zstream.next_out = bufout.data() + leftoverlen;
     if (zstream.avail_in == 0) {
-      log("dump: {:} of {:} done{:}\n", here(), zstream.total_in, length, bytes_avail);
+//      log("dump: {:} of {:} done{:}\n", here(), zstream.total_in, length, bytes_avail);
       zstream.avail_in = in.read<uint8_t>(std::span<uint8_t>(
           bufin.data(), std::min(bufin.size(), bytes_avail)));
       bytes_avail -= zstream.avail_in;

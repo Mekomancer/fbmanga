@@ -3,10 +3,11 @@ import std;
 import config;
 import types;
 
-export std::source_location
+export std::source_location 
 here(std::source_location loc = std::source_location::current()) {
   return loc;
 }
+
 std::string current_file = "";
 std::string current_func = "";
 
@@ -35,5 +36,7 @@ void log(std::format_string<args_t...> fmt, std::source_location loc,
     std::print("{:4} ", loc.line());
   }
   std::print(fmt, std::forward<args_t>(args)...);
+#ifndef NDEBUG
   std::fflush(0);
+#endif
 }
