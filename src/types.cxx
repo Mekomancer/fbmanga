@@ -1,5 +1,6 @@
 module;
 #include <cstdint>
+#include <curses.h>
 export module types;
 import std;
 export typedef std::uint8_t uint8_t;
@@ -10,3 +11,20 @@ export typedef std::size_t size_t;
 export struct rgb888 {
   uint8_t red, grn, blu;
 };
+export template <typename T, typename E> using Result = std::expected<T, E>;
+export template <typename E> using Err = std::unexpected<E>;
+export template <typename T> using Option = std::optional<T>;
+export const std::nullopt_t None = std::nullopt;
+export typedef std::string String;
+constexpr int _KEY_UP = KEY_UP;
+#undef KEY_UP
+constexpr int KEY_UP = _KEY_UP;
+constexpr int _KEY_DOWN = KEY_DOWN;
+#undef KEY_DOWN
+constexpr int KEY_DOWN = _KEY_DOWN;
+constexpr int _KEY_RIGHT = KEY_RIGHT;
+#undef KEY_RIGHT
+constexpr int KEY_RIGHT = _KEY_RIGHT;
+constexpr int _KEY_LEFT = KEY_LEFT;
+#undef KEY_LEFT
+constexpr int KEY_LEFT = _KEY_LEFT;

@@ -1,3 +1,5 @@
+module;
+#include <cstdio>
 export module config;
 import std;
 import types;
@@ -5,13 +7,14 @@ import types;
 export class configuration {
 public:
   std::map<std::string, bool> logging{
-      {"all", false}, {"location",false},{"error", true}, {"warn", true}};
+      {"all", false}, {"location", false}, {"error", true}, {"warn", true}};
   std::string mangadex_api_url = "api.mangadex."
 #ifndef NDEBUG
                                  "dev";
 #else
                                  "org";
 #endif
+  std::FILE *log = stdout;
   void indexArgs(int argn, char *argv[]);
   int parseArgs();
 
@@ -42,12 +45,18 @@ int configuration::parseArgs() {
       std::exit(0);
     } else if (arg == "-v") {
       ++v_count;
-      if(v_count > 0){
-	logging["all"] = true;
+      if (v_count > 0) {
+        logging["all"] = true;
       }
-      if(v_count > 1){
-	logging["location"] = true;
+      if (v_count > 1) {
+        logging["location"] = true;
       }
+    } else if (arg == "-f") {
+      if (i + 1 < args.size()) {
+        log = std::fopen(args[i + 1].c_str(), "w+");
+        continue;
+      }
+      std::println("Filename expected");
     }
   }
   return 0;

@@ -1,13 +1,36 @@
 module;
 #include <arm_acle.h>
-#include <unistd.h>
-export module png:util;
-import debug;
+export module util;
 import std;
+import debug;
 import types;
-/*png (network) to host byte order*/
 
-uint32_t crc32(std::span<uint8_t> dat) {
+export Result<void, int> scale(std::span<rgb888> image, size_t sw, size_t sh,
+                               std::span<rgb888> kernel, Option<size_t> tw,
+                               Option<size_t> th) {
+  if (!(tw || th)) {
+    std::memcpy(kernel.data(), image.data(), sw * sh * sizeof(rgb888));
+    return {};
+  }
+  size_t w = sw;
+  double scl = 1.0;
+  if (tw) {
+    scl = static_cast<double>(tw.value()) / static_cast<double>(sw);
+    w = tw.value();
+  }
+  if (th) {
+    scl = static_cast<double>(th.value()) / static_cast<double>(sh);
+  }
+  for (uint32_t r = 0; r < sh; r++) {
+    for (uint32_t c = 0; c < sw; c++) {
+      long int i =
+          static_cast<int>(c * scl) + tw.value() * static_cast<int>(r * scl);
+      image[r * w + c] = kernel[i];
+    }
+  }
+  return {};
+}
+export uint32_t crc32(std::span<uint8_t> dat) {
 #if __ARM_FEATURE_CRC32 == true
   return ~std::accumulate(
       dat.begin(), dat.end(), ~(0ul),
@@ -17,7 +40,7 @@ uint32_t crc32(std::span<uint8_t> dat) {
 #endif
 }
 
-export template <typename T> [[nodiscard]] constexpr T ptoh(T val) noexcept {
+export [[nodiscard]] constexpr auto ptoh(auto val) noexcept -> decltype(val) {
   using enum std::endian;
   if constexpr (native == big) {
     return val;
@@ -29,20 +52,19 @@ export template <typename T> [[nodiscard]] constexpr T ptoh(T val) noexcept {
   }
 }
 
-/*host to png (network) byte order*/
-export template <typename T> [[nodiscard]] constexpr T htop(T val) noexcept {
+/*host to png/network byte order*/
+export [[nodiscard]] constexpr auto htop(auto val) noexcept -> decltype(val) {
   return ptoh(val);
 }
 static_assert(htop(ptoh(1)) == 1);
-
-export template <typename T> constexpr T bitscale(T val, int cur, int target) {
+export constexpr auto bitscale(auto val, int cur, int target) -> decltype(val){
   return (((2 * val * ((1 << target) - 1)) / ((1 << cur) - 1)) + 1) / 2;
 }
 export class ring_buf {
 public:
   template <typename t = uint8_t> size_t peek(std::span<t> buf);
   template <typename t = uint8_t> size_t read(std::span<t> buf);
-  template <typename t = uint8_t> t pop() {
+  template <typename t = uint8_t> auto pop() {
     std::vector<uint8_t> buf(sizeof(t));
     read(std::span(buf));
     return *reinterpret_cast<t *>(buf.data());
@@ -121,7 +143,7 @@ size_t ring_buf::resize(size_t newlen) {
     return data.size();
   };
   size_t oldsize = data.size();
-  data.resize(newlen + getpagesize());
+  data.resize(newlen + 4096);
   if (is_wrapped()) {
     std::memcpy(&data[oldsize], data.data(), end);
     end = oldsize + end;

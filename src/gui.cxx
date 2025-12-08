@@ -10,7 +10,6 @@ public:
   void resize(uint32_t w, uint32_t h);
   uint32_t xres() { return width; };
   uint32_t yres() { return height; };
-
 private:
   uint32_t width;
   uint32_t height;
@@ -43,7 +42,7 @@ rgb888 &image_t::at(auto row, auto col) {
   }
 }
 
-void downscale_nearest(image_t *in, image_t *out) {
+export void downscale_nearest(image_t *in, image_t *out) {
   for (uint32_t irow = 0; irow < in->yres(); ++irow) {
     uint32_t orow = irow * out->yres() / in->yres();
     for (uint32_t icol = 0; icol < in->xres(); ++icol) {
@@ -53,19 +52,19 @@ void downscale_nearest(image_t *in, image_t *out) {
   }
 }
 
-//      cols
-//   0 1 2 ... width
-//  0xxxxxxxxxxxxxxxx
-//  1xxxxxxxxxxxxxxxx
+//       cols
+//    0 1 2 ... width
+//   0xxxxxxxxxxxxxxxx
+//   1xxxxxxxxxxxxxxxx
 // r 2xxxxxxxxxxxxxxxx
 // o .xxxxxxxxxxxxxxxx
 // w .xxxxxxxxxxxxxxxx
 // s .xxxxxxxxxxxxxxxx
-//  hxxxxxxxxxxxxxxxx
-//  exxxxxxxxxxxxxxxx
-//  ixxxxxxxxxxxxxxxx
-//  gxxxxxxxxxxxxxxxx
-//  txxxxxxxxxxxxxxxx
+//   hxxxxxxxxxxxxxxxx
+//   exxxxxxxxxxxxxxxx
+//   ixxxxxxxxxxxxxxxx
+//   gxxxxxxxxxxxxxxxx
+//   txxxxxxxxxxxxxxxx
 //
 //  >>>>>>
 //  .----'

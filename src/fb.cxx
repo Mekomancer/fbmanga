@@ -8,7 +8,7 @@ import debug;
 import std;
 import types;
 import config;
-import png;
+import util;
 
 export class frame_buffer {
 public:

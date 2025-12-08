@@ -3,10 +3,17 @@ module;
 #include <zlib.h>
 export module png;
 import debug;
-export import :util;
+import util;
 import std;
 import types;
 import ui.gui;
+
+export enum class PngCode {
+  ok,
+  bad_file_sig,
+  bad_ihdr,
+  invalid_checksum,
+};
 
 export class png_t {
 public:
@@ -24,7 +31,7 @@ public:
   ring_buf in;
   image_t image;
   int init();
-  int parseHead();
+  PngCode parseHead();
   int parsePalette(uint32_t length);
   int decode();
 
@@ -80,6 +87,22 @@ private:
 };
 
 bool png_t::validDepthColor() {
+  //   | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+  //  1| x |   |   | x |   |   |   |1
+  //  2| x |   |   | x |   |   |   |2
+  //  4| x |   |   | x |   |   |   |4
+  //  8| x |   | x | x | x |   | x |8
+  // 16| x |   | x |   | x |   | x |16
+  switch (ihdr.color_type) {
+  case 0:
+  case 2:
+  case 3:
+  case 4:
+  case 6:
+    break;
+  default:
+    return false;
+  }
   if (!std::has_single_bit(ihdr.bit_depth)) {
     return false;
   }
@@ -95,58 +118,55 @@ bool png_t::validDepthColor() {
   return true;
 };
 
-int png_t::parseHead() {
+PngCode png_t::parseHead() {
   log("info: Parsing PNG header\n", here());
   uint64_t file_sig = ptoh(in.pop<uint64_t>());
   log("dump: file sig: {:16x}\n", here(), file_sig);
   log("dump: png  sig: {:16x}\n", here(), signature);
   if (file_sig != signature) {
     log("error: Bad file sig\n", here());
-    tainted = true;
+    return PngCode::bad_file_sig;
   }
   uint32_t len = ptoh(in.pop<uint32_t>());
   log("dump: IHDR length: {:}", here(), len);
   if (len != 13) {
     log("error: Bad IHDR (length should be 13, is {:})\n", here(), len);
+    return PngCode::bad_ihdr;
   };
   if (!checkCRC(len)) {
-    tainted = true;
+    return PngCode::invalid_checksum;
   };
   uint32_t type = ptoh(in.pop<uint32_t>());
   if (type != chunk_type["IHDR"]) {
-    log("error: First chunk is not IHDR, (got {:8x})\n", here(), type);
-    tainted = true;
-    return -1;
+    log("error: First chunk's type is not IHDR, (got {:8x})\n", here(), type);
+    return PngCode::bad_ihdr;
   }
   ihdr = in.pop<png_t::ihdr_t>();
   ihdr.width = ptoh(ihdr.width);
   ihdr.height = ptoh(ihdr.height);
-  log("info: Width: {:d}, Height: {:d}, Bit depth: {:d}, Color type: {:d}", here(),
-      ihdr.width, ihdr.height, ihdr.bit_depth, ihdr.color_type);
+  log("info: Width: {:d}, Height: {:d}, Bit depth: {:d}, Color type: {:d}",
+      here(), ihdr.width, ihdr.height, ihdr.bit_depth, ihdr.color_type);
   if (!validDepthColor()) {
     log("warn: invalid color-type and bit-depth combonation", here());
-    tainted = true;
+    return PngCode::bad_ihdr;
   }
   if (ihdr.compression_method == 0) {
     log("info: Compression method: DEFLATE\n", here());
   } else {
-    log("error: Unknown compression method {:}\n", here(), ihdr.compression_method
-        );
-    tainted = true;
+    log("warn: Unknown compression method {:}\n", here(),
+        ihdr.compression_method);
   }
   if (ihdr.filter_method == 0) {
     log("info: Filter method: Adaptive\n", here());
   } else {
-    log("error: Unknown filter method {:}\n", here(), ihdr.filter_method);
-    tainted = true;
+    log("warn: Unknown filter method {:}\n", here(), ihdr.filter_method);
   }
   if (ihdr.interlace_method == 0) {
     log("info: Interlace method: Null\n", here());
   } else if (ihdr.interlace_method == 1) {
     log("info: Interlace method: Adam7\n", here());
   } else {
-    log("error: Unknown filter method {:}\n", here(), ihdr.interlace_method);
-    tainted = true;
+    log("warn: Unknown filter method {:}\n", here(), ihdr.interlace_method);
   }
   image_size = static_cast<long>(ihdr.width) * static_cast<long>(ihdr.height);
   image.resize(ihdr.width, ihdr.height);
@@ -167,7 +187,7 @@ int png_t::parseHead() {
   curline.resize(scanline_mem);
   prevline.resize(scanline_mem);
   in.pop<uint32_t>(); // crc
-  return 0;
+  return PngCode::ok;
 }
 
 bool png_t::checkCRC(uint32_t len) {
@@ -177,12 +197,12 @@ bool png_t::checkCRC(uint32_t len) {
   uint32_t calc = crc32(std::span(buf).subspan(0, len + 4));
   uint32_t crc = ptoh(*reinterpret_cast<uint32_t *>(&buf[len + 4]));
   if (crc == calc) {
-    log("info: CRC check passed ^.^ (calc: {:8x}, png: {:8x})\n", here(), calc, crc
-      );
+    log("info: CRC check passed ^.^ (calc: {:8x}, png: {:8x})\n", here(), calc,
+        crc);
     return true;
   } else {
-    log("warn: CRC check failed ToT (calc: {:8x}, png: {:8x})\n",here(), calc, crc
-        );
+    log("warn: CRC check failed ToT (calc: {:8x}, png: {:8x})\n", here(), calc,
+        crc);
     return false;
   }
   return false;
@@ -262,8 +282,8 @@ int png_t::decode() {
 int png_t::parsePalette(uint32_t length) {
   in.pop<uint32_t>();
   if (length % 3 != 0) {
-    log("error: Invalid PLTE chunk, PLTE length ({:d}) is not divisible by 3\n", here(),
-        length);
+    log("error: Invalid PLTE chunk, PLTE length ({:d}) is not divisible by 3\n",
+        here(), length);
     return -1;
   }
   palette.resize(length / 3);
@@ -304,7 +324,8 @@ int png_t::decodeImageData(uint32_t length) {
     zstream.avail_out += consumed;
     zstream.next_out = bufout.data() + leftoverlen;
     if (zstream.avail_in == 0) {
-//      log("dump: {:} of {:} done{:}\n", here(), zstream.total_in, length, bytes_avail);
+      //      log("dump: {:} of {:} done{:}\n", here(), zstream.total_in,
+      //      length, bytes_avail);
       zstream.avail_in = in.read<uint8_t>(std::span<uint8_t>(
           bufin.data(), std::min(bufin.size(), bytes_avail)));
       bytes_avail -= zstream.avail_in;
@@ -474,12 +495,14 @@ void png_t::notImplYet(int len) {
   return;
 }
 int png_t::trns(int length) {
-  log("info: Decoding transparency info (type: tRNS length: {:})\n", here(), length);
+  log("info: Decoding transparency info (type: tRNS length: {:})\n", here(),
+      length);
   notImplYet(length);
   return 0;
 }
 int png_t::chrm(int length) {
-  log("info: Decoding chroma info, (type: cHRM, length: {:})\n", here(), length);
+  log("info: Decoding chroma info, (type: cHRM, length: {:})\n", here(),
+      length);
   notImplYet(length);
   return 0;
 }
@@ -494,7 +517,8 @@ int png_t::iccp(int length) {
   return 0;
 }
 int png_t::sbit(int length) {
-  log("info: Decoding sample depth info, (type: sBIT, length: {:}\n", here(), length);
+  log("info: Decoding sample depth info, (type: sBIT, length: {:}\n", here(),
+      length);
   notImplYet(length);
   return 0;
 }
@@ -556,17 +580,5 @@ int png_t::exif(int length) {
 int png_t::time(int length) {
   log("info: Decoding gamma info, (type: tIME, length: {:}\n", here(), length);
   notImplYet(length);
-  return 0;
-}
-
-int scale(double fctr, std::span<rgb888> image, size_t w, size_t h,
-          std::span<rgb888> kernel) {
-  double scl = 1 / fctr - 0.1;
-  for (uint32_t r = 0; r < h; r++) {
-    for (uint32_t c = 0; c < w; c++) {
-      long int i = static_cast<int>(c * scl) + 480 * static_cast<int>(r * scl);
-      image[r * w + c] = kernel[i];
-    }
-  }
   return 0;
 }
