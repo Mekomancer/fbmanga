@@ -6,7 +6,7 @@ import debug;
 import util;
 import std;
 import types;
-import ui.gui;
+import gui;
 
 export enum class PngCode {
   ok,
@@ -14,8 +14,8 @@ export enum class PngCode {
   bad_ihdr,
   invalid_checksum,
 };
-
-export class png_t {
+export class Reader {};
+export class Png {
 public:
   struct __attribute__((__packed__)) ihdr_t {
     uint32_t width;
@@ -86,7 +86,7 @@ private:
   int scanline_mem = -1;
 };
 
-bool png_t::validDepthColor() {
+bool Png::validDepthColor() {
   //   | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
   //  1| x |   |   | x |   |   |   |1
   //  2| x |   |   | x |   |   |   |2
@@ -118,7 +118,7 @@ bool png_t::validDepthColor() {
   return true;
 };
 
-PngCode png_t::parseHead() {
+PngCode Png::parseHead() {
   log("info: Parsing PNG header\n", here());
   uint64_t file_sig = ptoh(in.pop<uint64_t>());
   log("dump: file sig: {:16x}\n", here(), file_sig);
@@ -141,7 +141,7 @@ PngCode png_t::parseHead() {
     log("error: First chunk's type is not IHDR, (got {:8x})\n", here(), type);
     return PngCode::bad_ihdr;
   }
-  ihdr = in.pop<png_t::ihdr_t>();
+  ihdr = in.pop<Png::ihdr_t>();
   ihdr.width = ptoh(ihdr.width);
   ihdr.height = ptoh(ihdr.height);
   log("info: Width: {:d}, Height: {:d}, Bit depth: {:d}, Color type: {:d}",
@@ -190,7 +190,7 @@ PngCode png_t::parseHead() {
   return PngCode::ok;
 }
 
-bool png_t::checkCRC(uint32_t len) {
+bool Png::checkCRC(uint32_t len) {
   log("info: Checking CRC, length={:}\n", here(), len);
   std::vector<uint8_t> buf(len + 8 /*crc and chunk type are 4 bytes each*/);
   in.peek<uint8_t>(buf);
@@ -208,13 +208,13 @@ bool png_t::checkCRC(uint32_t len) {
   return false;
 }
 
-int png_t::init() {
+int Png::init() {
   image_size = 10;
   log("info: PNG init'ed\n", here());
   return 0;
 }
 
-int png_t::decode() {
+int Png::decode() {
   log("info: Decoding PNG\n", here());
   while (in.len() > 0) {
     uint32_t length = ptoh(in.pop<uint32_t>());
@@ -279,7 +279,7 @@ int png_t::decode() {
   return 0;
 }
 
-int png_t::parsePalette(uint32_t length) {
+int Png::parsePalette(uint32_t length) {
   in.pop<uint32_t>();
   if (length % 3 != 0) {
     log("error: Invalid PLTE chunk, PLTE length ({:d}) is not divisible by 3\n",
@@ -292,7 +292,7 @@ int png_t::parsePalette(uint32_t length) {
   };
   return 0;
 };
-int png_t::decodeImageData(uint32_t length) {
+int Png::decodeImageData(uint32_t length) {
   log("info: Decoding image data\n", here());
   in.pop<uint32_t>();
   size_t bytes_avail = length;
@@ -354,7 +354,7 @@ int png_t::decodeImageData(uint32_t length) {
   };
 }
 
-int png_t::filterline(const uint8_t *buf, int length, int row) {
+int Png::filterline(const uint8_t *buf, int length, int row) {
   int line = 0;
   int prev_offset = (bpp <= 8) ? 1 : bpp / 8;
   while (line + scanline_mem <= length) {
@@ -407,7 +407,7 @@ int png_t::filterline(const uint8_t *buf, int length, int row) {
   return line;
 }
 
-int png_t::writeLine(int row) {
+int Png::writeLine(int row) {
   if (ihdr.color_type == 3) {
     if (ihdr.bit_depth < 8) {
       uint8_t bmask = (1 << (ihdr.bit_depth)) - 1;
@@ -487,97 +487,97 @@ int png_t::writeLine(int row) {
   return 0;
 }
 
-void png_t::notImplYet(int len) {
+void Png::notImplYet(int len) {
   log("warn: Chunk handler not implemeted yet, skipping chunk\n", here());
-  std::vector<uint8_t> dummybuf(len + 8);
+  std::vector<uint8_t> dummybuf(len + 4);
   in.read<uint8_t>(dummybuf);
   log("info: Skipped {:} bytes\n", here(), dummybuf.size());
   return;
 }
-int png_t::trns(int length) {
+int Png::trns(int length) {
   log("info: Decoding transparency info (type: tRNS length: {:})\n", here(),
       length);
   notImplYet(length);
   return 0;
 }
-int png_t::chrm(int length) {
+int Png::chrm(int length) {
   log("info: Decoding chroma info, (type: cHRM, length: {:})\n", here(),
       length);
   notImplYet(length);
   return 0;
 }
-int png_t::gama(int length) {
+int Png::gama(int length) {
   log("info: Decoding gamma info, (type: gAMA, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::iccp(int length) {
+int Png::iccp(int length) {
   log("info: Decoding ICC profile, (type: iCCP, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::sbit(int length) {
+int Png::sbit(int length) {
   log("info: Decoding sample depth info, (type: sBIT, length: {:}\n", here(),
       length);
   notImplYet(length);
   return 0;
 }
-int png_t::srgb(int length) {
+int Png::srgb(int length) {
   log("info: Decoding sRGB info, (type: sRGB, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::cicp(int length) {
+int Png::cicp(int length) {
   log("info: Decoding color info, (type: cICP, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::mdcv(int length) {
+int Png::mdcv(int length) {
   log("info: Decoding color info, (type: mDCV, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::itxt(int length) {
+int Png::itxt(int length) {
   log("info: Decoding text, (type: iTXT, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::text(int length) {
+int Png::text(int length) {
   log("info: Decoding gamma info, (type: tEXT, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::ztxt(int length) {
+int Png::ztxt(int length) {
   log("info: Decoding gamma info, (type: zTXT, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::bkgd(int length) {
+int Png::bkgd(int length) {
   log("info: Decoding gamma info, (type: bKGD, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::hist(int length) {
+int Png::hist(int length) {
   log("info: Decoding gamma info, (type: hIST, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::phys(int length) {
+int Png::phys(int length) {
   log("info: Decoding gamma info, (type: pHYS, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::splt(int length) {
+int Png::splt(int length) {
   log("info: Decoding gamma info, (type: sPLT, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::exif(int length) {
+int Png::exif(int length) {
   log("info: Decoding gamma info, (type: eXIF, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;
 }
-int png_t::time(int length) {
+int Png::time(int length) {
   log("info: Decoding gamma info, (type: tIME, length: {:}\n", here(), length);
   notImplYet(length);
   return 0;

@@ -1,4 +1,4 @@
-export module ui.gui;
+export module gui;
 import std;
 import types;
 
@@ -10,6 +10,7 @@ public:
   void resize(uint32_t w, uint32_t h);
   uint32_t xres() { return width; };
   uint32_t yres() { return height; };
+
 private:
   uint32_t width;
   uint32_t height;
@@ -42,6 +43,7 @@ rgb888 &image_t::at(auto row, auto col) {
   }
 }
 
+export template <typename T> int ask(std::span<T> opts) { return 0; }
 export void downscale_nearest(image_t *in, image_t *out) {
   for (uint32_t irow = 0; irow < in->yres(); ++irow) {
     uint32_t orow = irow * out->yres() / in->yres();

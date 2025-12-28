@@ -46,12 +46,13 @@ target_sources(fbmanga
   src/util.cxx
   src/fb.cxx
   src/types.cxx
-  src/tui.cxx
   src/gui.cxx
+  src/tui.cxx
   src/config.cxx
   src/manga.cxx
   src/flate.cxx
   src/net.cxx
+  src/menu.cxx
 )
 
 

@@ -4,7 +4,6 @@ export module util;
 import std;
 import debug;
 import types;
-
 export Result<void, int> scale(std::span<rgb888> image, size_t sw, size_t sh,
                                std::span<rgb888> kernel, Option<size_t> tw,
                                Option<size_t> th) {
@@ -57,7 +56,7 @@ export [[nodiscard]] constexpr auto htop(auto val) noexcept -> decltype(val) {
   return ptoh(val);
 }
 static_assert(htop(ptoh(1)) == 1);
-export constexpr auto bitscale(auto val, int cur, int target) -> decltype(val){
+export constexpr auto bitscale(auto val, int cur, int target) -> decltype(val) {
   return (((2 * val * ((1 << target) - 1)) / ((1 << cur) - 1)) + 1) / 2;
 }
 export class ring_buf {

@@ -20,17 +20,16 @@ public:
   void printInfo();
   void setPixel(int row, int col, rgb888 color) noexcept;
   rgb888 getPixel(int row, int col);
-  frame_buffer() = delete;
-  explicit frame_buffer(std::filesystem::path fb_device = "/dev/fb0");
+  void init(std::filesystem::path fb_device = "/dev/fb0");
   ~frame_buffer();
 
 private:
   void *addr;
   int fd;
-};
+} fb;
 namespace fs = std::filesystem;
 // this code was meant for a 565 screen, it may not work for a 888 screen
-frame_buffer::frame_buffer(fs::path fb_dev) {
+void frame_buffer::init(fs::path fb_dev) {
   fd = open(fb_dev.c_str(), O_RDWR);
   ioctl(fd, FBIOGET_FSCREENINFO, &finfo);
   ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
